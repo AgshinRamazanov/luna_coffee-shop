@@ -186,14 +186,14 @@ export default function MenuPage() {
   };
 
   const loadMockData = () => {
-    // Force migration to version 4 to load the full menu list with translations
+    // Force migration to version 5 to load the full menu list with translations
     const currentVersion = localStorage.getItem('luna_demo_version');
-    if (currentVersion !== 'v4') {
+    if (currentVersion !== 'v5') {
       localStorage.setItem('luna_demo_categories', JSON.stringify(INITIAL_CATEGORIES));
       localStorage.setItem('luna_demo_products', JSON.stringify(INITIAL_PRODUCTS));
       localStorage.setItem('luna_demo_modifications', JSON.stringify(INITIAL_MODIFICATIONS));
       localStorage.setItem('luna_demo_settings', JSON.stringify(INITIAL_SETTINGS));
-      localStorage.setItem('luna_demo_version', 'v4');
+      localStorage.setItem('luna_demo_version', 'v5');
     }
 
     const storedCats = localStorage.getItem('luna_demo_categories');
