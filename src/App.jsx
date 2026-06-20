@@ -7,6 +7,20 @@ function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('luna_theme') === 'dark';
+  });
+
+  // Sync theme to document body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme');
+      localStorage.setItem('luna_theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-theme');
+      localStorage.setItem('luna_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Track hash routing changes
   useEffect(() => {
@@ -49,7 +63,7 @@ function App() {
   }
 
   // Default: Public Customer Menu
-  return <MenuPage />;
+  return <MenuPage isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />;
 }
 
 export default App;

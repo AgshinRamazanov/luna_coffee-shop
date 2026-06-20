@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
-import { Search, X, Wifi, MapPin, Globe, Loader } from 'lucide-react';
+import { Search, X, Wifi, MapPin, Globe, Loader, Sun, Moon } from 'lucide-react';
 
 const Instagram = ({ size = 24, ...props }) => (
   <svg
@@ -70,7 +70,7 @@ const UI_TRANSLATIONS = {
   }
 };
 
-export default function MenuPage() {
+export default function MenuPage({ isDarkMode, setIsDarkMode }) {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [modifications, setModifications] = useState([]);
@@ -312,11 +312,33 @@ export default function MenuPage() {
       {/* Sticky Header */}
       <header className="header-glass">
         <div className="header-top">
-          <h1 className="brand-title">
-            {settings.shop_name}
-            <span>Menu</span>
+          <h1 className="brand-title" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <img 
+              src={isDarkMode ? "/dark_mode.png" : "/light_mode.png"} 
+              alt={settings.shop_name || "Luna Coffee Shop"} 
+              style={{ height: '36px', width: 'auto', display: 'block' }} 
+            />
+            <span style={{ 
+              fontFamily: 'var(--font-body)', 
+              fontWeight: 300, 
+              fontSize: '0.65rem', 
+              textTransform: 'uppercase', 
+              letterSpacing: '2px', 
+              color: 'var(--wood-medium)',
+              paddingLeft: '2px'
+            }}>Menu</span>
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Theme Toggle */}
+            <button 
+              className="lang-pill" 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              aria-label="Toggle Theme"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.4rem', borderRadius: '50%', width: '32px', height: '32px' }}
+            >
+              {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+
             {/* Language Switcher */}
             <div className="language-selector">
               <button className={`lang-pill ${language === 'az' ? 'active' : ''}`} onClick={() => setLanguage('az')}>AZ</button>
