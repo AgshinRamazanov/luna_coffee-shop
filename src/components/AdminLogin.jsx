@@ -27,7 +27,7 @@ export default function AdminLogin({ onLoginSuccess }) {
           sessionStorage.setItem('luna_admin_session', 'demo-session-token');
           onLoginSuccess(true, true); // (authenticated, isDemoMode)
         } else {
-          setErrorMsg('Invalid passcode! (Hint: use "luna2026" for Demo Mode)');
+          setErrorMsg('Yanlış keçid şifrəsi! (İpucu: Demo rejimi üçün "luna2026" istifadə edin)');
         }
       } else {
         // Active Supabase mode
@@ -46,12 +46,12 @@ export default function AdminLogin({ onLoginSuccess }) {
           sessionStorage.setItem('luna_admin_session', hash);
           onLoginSuccess(true, false); // (authenticated, isDemoMode)
         } else {
-          setErrorMsg('Incorrect admin password. Please try again.');
+          setErrorMsg('Yanlış admin şifrəsi. Yenidən cəhd edin.');
         }
       }
     } catch (err) {
       console.error('Login error:', err);
-      setErrorMsg('Server connection failed. Try again later.');
+      setErrorMsg('Serverlə bağlantı qurulmadı. Bir az sonra yenidən cəhd edin.');
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ export default function AdminLogin({ onLoginSuccess }) {
       {/* Back button */}
       <div style={{ padding: '1.5rem' }}>
         <a href="#/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderRadius: '20px' }}>
-          <ArrowLeft size={16} /> Back to Menu
+          <ArrowLeft size={16} /> Menyuya Qayıt
         </a>
       </div>
 
@@ -84,9 +84,9 @@ export default function AdminLogin({ onLoginSuccess }) {
           </div>
 
           <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Admin Access</h2>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Admin Girişi</h2>
             <p style={{ fontSize: '0.9rem', color: 'var(--wood-medium)' }}>
-              Enter password to manage categories, products, and prices.
+              Kateqoriyaları, məhsulları və qiymətləri idarə etmək üçün şifrəni daxil edin.
             </p>
           </div>
 
@@ -105,7 +105,7 @@ export default function AdminLogin({ onLoginSuccess }) {
             }}>
               <AlertTriangle size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <strong>Local Demo Mode:</strong> Since Supabase keys are not set yet, you can access the admin dashboard using the default passcode: <code>luna2026</code>.
+                <strong>Yerli Demo Rejimi:</strong> Supabase açarları hələ təyin edilmədiyi üçün admin panelinə daxil olmaq üçün standart şifrədən istifadə edə bilərsiniz: <code>luna2026</code>.
               </div>
             </div>
           )}
@@ -125,7 +125,7 @@ export default function AdminLogin({ onLoginSuccess }) {
           )}
 
           <div className="form-group">
-            <label className="form-label" htmlFor="admin-pass">Passcode</label>
+            <label className="form-label" htmlFor="admin-pass">Keçid şifrəsi</label>
             <input
               type="password"
               id="admin-pass"
@@ -147,10 +147,10 @@ export default function AdminLogin({ onLoginSuccess }) {
           >
             {loading ? (
               <>
-                <Loader className="animate-spin" size={18} style={{ animation: 'spin 1.5s linear infinite' }} /> Checking passcode...
+                <Loader className="animate-spin" size={18} style={{ animation: 'spin 1.5s linear infinite' }} /> Şifrə yoxlanılır...
               </>
             ) : (
-              'Access Panel'
+              'Daxil ol'
             )}
           </button>
           <style>{`

@@ -139,7 +139,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       }
     } catch (e) {
       console.error(e);
-      triggerToast('Error fetching data.');
+      triggerToast('Məlumatların yüklənməsində xəta baş verdi.');
     } finally {
       setLoading(false);
     }
@@ -169,7 +169,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         }
         setCategories(updatedCats.sort((a,b) => a.sort_order - b.sort_order));
         localStorage.setItem('luna_demo_categories', JSON.stringify(updatedCats));
-        triggerToast('Category saved.');
+        triggerToast('Kateqoriya yadda saxlanıldı.');
       } else {
         const payload = { name: catName, name_en: catNameEn || null, name_ru: catNameRu || null };
         if (editingCat) {
@@ -181,7 +181,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           if (error) throw error;
         }
         fetchData();
-        triggerToast('Category saved to database.');
+        triggerToast('Kateqoriya verilənlər bazasında yadda saxlanıldı.');
       }
       setShowCatModal(false);
       setEditingCat(null);
@@ -190,12 +190,12 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       setCatNameRu('');
     } catch (err) {
       console.error(err);
-      triggerToast('Error saving category.');
+      triggerToast('Kateqoriyanın yadda saxlanılmasında xəta baş verdi.');
     }
   };
 
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category? All its items will be deleted.')) return;
+    if (!window.confirm('Bu kateqoriyanı silmək istədiyinizdən əminsiniz? Bütün müvafiq məhsullar silinəcək.')) return;
 
     try {
       if (isDemoMode) {
@@ -210,10 +210,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         if (error) throw error;
         fetchData();
       }
-      triggerToast('Category deleted.');
+      triggerToast('Kateqoriya silindi.');
     } catch (err) {
       console.error(err);
-      triggerToast('Error deleting category.');
+      triggerToast('Kateqoriyanın silinməsində xəta baş verdi.');
     }
   };
 
@@ -241,10 +241,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         }
         fetchData();
       }
-      triggerToast('Order updated.');
+      triggerToast('Sıralama yeniləndi.');
     } catch (err) {
       console.error(err);
-      triggerToast('Failed to update sort order.');
+      triggerToast('Sıralamanın yenilənməsində xəta baş verdi.');
       setLoading(false);
     }
   };
@@ -294,7 +294,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         }
         setProducts(updatedProds.sort((a,b) => a.sort_order - b.sort_order));
         localStorage.setItem('luna_demo_products', JSON.stringify(updatedProds));
-        triggerToast('Product saved.');
+        triggerToast('Məhsul yadda saxlanıldı.');
       } else {
         const payload = {
           name: prodForm.name,
@@ -318,18 +318,18 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           if (error) throw error;
         }
         fetchData();
-        triggerToast('Product saved.');
+        triggerToast('Məhsul yadda saxlanıldı.');
       }
       setShowProdModal(false);
       setEditingProd(null);
     } catch (err) {
       console.error(err);
-      triggerToast('Error saving product.');
+      triggerToast('Məhsulun yadda saxlanılmasında xəta baş verdi.');
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Delete this product? All its size modifications will be deleted.')) return;
+    if (!window.confirm('Bu məhsulu silmək istəyirsiniz? Bütün müvafiq ölçü/qiymət seçimləri silinəcək.')) return;
 
     try {
       if (isDemoMode) {
@@ -344,10 +344,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         if (error) throw error;
         fetchData();
       }
-      triggerToast('Product deleted.');
+      triggerToast('Məhsul silindi.');
     } catch (err) {
       console.error(err);
-      triggerToast('Error deleting product.');
+      triggerToast('Məhsulun silinməsində xəta baş verdi.');
     }
   };
 
@@ -363,10 +363,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         if (error) throw error;
         fetchData();
       }
-      triggerToast(`${product.name} is now ${updatedStatus ? 'available' : 'unavailable'}`);
+      triggerToast(`${product.name} indi ${updatedStatus ? 'mövcuddur' : 'tükənib'}`);
     } catch (e) {
       console.error(e);
-      triggerToast('Error updating status.');
+      triggerToast('Statusun yenilənməsində xəta baş verdi.');
     }
   };
 
@@ -392,10 +392,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         }
         fetchData();
       }
-      triggerToast('Product order updated.');
+      triggerToast('Məhsulların sıralaması yeniləndi.');
     } catch (err) {
       console.error(err);
-      triggerToast('Failed to update product order.');
+      triggerToast('Məhsul sıralamasının yenilənməsində xəta baş verdi.');
       setLoading(false);
     }
   };
@@ -452,15 +452,15 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       }
       setShowModModal(false);
       setEditingMod(null);
-      triggerToast('Modification saved.');
+      triggerToast('Seçim/Ölçü yadda saxlanıldı.');
     } catch (err) {
       console.error(err);
-      triggerToast('Error saving size modification.');
+      triggerToast('Seçim/Ölçünün yadda saxlanılmasında xəta baş verdi.');
     }
   };
 
   const handleDeleteMod = async (id) => {
-    if (!window.confirm('Delete this size modification?')) return;
+    if (!window.confirm('Bu ölçü seçimini silmək istəyirsiniz?')) return;
 
     try {
       if (isDemoMode) {
@@ -472,10 +472,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         if (error) throw error;
         fetchData();
       }
-      triggerToast('Modification deleted.');
+      triggerToast('Seçim/Ölçü silindi.');
     } catch (e) {
       console.error(e);
-      triggerToast('Error deleting modification.');
+      triggerToast('Seçim/Ölçünün silinməsində xəta baş verdi.');
     }
   };
 
@@ -488,7 +488,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     try {
       if (isDemoMode) {
         localStorage.setItem('luna_demo_settings', JSON.stringify(settings));
-        triggerToast('Settings updated locally.');
+        triggerToast('Ayarlar yerli yaddaşda yeniləndi.');
       } else {
         setLoading(true);
         // Save each settings key individually in settings table
@@ -499,11 +499,11 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           if (error) throw error;
         }
         fetchData();
-        triggerToast('Settings saved to database.');
+        triggerToast('Ayarlar verilənlər bazasında yadda saxlanıldı.');
       }
     } catch (err) {
       console.error(err);
-      triggerToast('Failed to save settings.');
+      triggerToast('Ayarların yadda saxlanılmasında xəta baş verdi.');
       setLoading(false);
     }
   };
@@ -542,18 +542,18 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       {/* Header bar */}
       <header className="admin-header">
         <div>
-          <h1 style={{ fontSize: '2rem' }}>Control Panel</h1>
+          <h1 style={{ fontSize: '2rem' }}>İdarəetmə Paneli</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             <span>{settings.shop_name || 'Luna Cafe'}</span>
-            {isDemoMode && <span style={{ padding: '2px 6px', backgroundColor: 'var(--bg-cream-dark)', borderRadius: '10px', fontSize: '0.7rem' }}>Demo Storage</span>}
+            {isDemoMode && <span style={{ padding: '2px 6px', backgroundColor: 'var(--bg-cream-dark)', borderRadius: '10px', fontSize: '0.7rem' }}>Demo Yaddaş</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <a href="#/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Eye size={16} /> View Menu
+            <Eye size={16} /> Menyuya Bax
           </a>
           <button className="btn btn-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }} onClick={onLogout}>
-            <LogOut size={16} /> Log Out
+            <LogOut size={16} /> Çıxış
           </button>
         </div>
       </header>
@@ -561,26 +561,26 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       {/* Navigation tabs */}
       <nav className="admin-nav">
         <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
-          <Coffee size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Items
+          <Coffee size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Məhsullar
         </button>
         <button className={`admin-tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
-          <FolderEdit size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Categories
+          <FolderEdit size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Kateqoriyalar
         </button>
         <button className={`admin-tab ${activeTab === 'modifications' ? 'active' : ''}`} onClick={() => setActiveTab('modifications')}>
-          <Sliders size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Sizes & Pricing
+          <Sliders size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Ölçülər və Qiymətlər
         </button>
         <button className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-          <Settings size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Shop Settings
+          <Settings size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Mağaza Ayarları
         </button>
         <button className={`admin-tab ${activeTab === 'qrcode' ? 'active' : ''}`} onClick={() => setActiveTab('qrcode')}>
-          <QrCode size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> QR Code
+          <QrCode size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> QR Kod
         </button>
       </nav>
 
       {/* Main dashboard panels */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--wood-medium)' }}>
-          <p>Connecting to database...</p>
+          <p>Verilənlər bazasına qoşulur...</p>
         </div>
       ) : (
         <>
@@ -603,14 +603,14 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
             return (
               <div className="dashboard-panel">
                 <div className="panel-header" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: 0 }}>Menu Items ({filteredProducts.length} / {products.length})</h3>
+                  <h3 style={{ margin: 0 }}>Menyu Məhsulları ({filteredProducts.length} / {products.length})</h3>
                   
                   {/* Search Bar */}
                   <div style={{ flex: '1', minWidth: '220px', maxWidth: '350px', position: 'relative' }}>
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Search items by name, description, or category..."
+                      placeholder="Məhsulları ad, təsvir və ya kateqoriyaya görə axtar..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       style={{ paddingLeft: '2.5rem', borderRadius: '8px', width: '100%', height: '38px', margin: 0 }}
@@ -636,7 +636,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     setProdForm({ name: '', name_en: '', name_ru: '', category_id: categories[0]?.id || '', description: '', description_en: '', description_ru: '', price: '', photo_url: '', is_available: true });
                     setShowProdModal(true);
                   }}>
-                    <Plus size={16} /> Add New Item
+                    <Plus size={16} /> Yeni Məhsul Əlavə et
                   </button>
                 </div>
 
@@ -644,14 +644,14 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '60px' }}>Rank</th>
-                        <th>Photo</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Base Price</th>
+                        <th style={{ width: '60px' }}>Sıra</th>
+                        <th>Şəkil</th>
+                        <th>Ad</th>
+                        <th>Kateqoriya</th>
+                        <th>Təsvir</th>
+                        <th>Baza Qiyməti</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th>Əməliyyatlar</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -683,12 +683,12 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                                 EN: {prod.name_en || '-'} | RU: {prod.name_ru || '-'}
                               </div>
                             </td>
-                            <td>{cat ? cat.name : 'Uncategorized'}</td>
+                            <td>{cat ? cat.name : 'Kateqoriyasız'}</td>
                             <td style={{ fontSize: '0.85rem', color: 'var(--wood-medium)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               <div>AZ: {prod.description || '-'}</div>
                               <div style={{ fontSize: '0.72rem', color: 'rgba(44, 26, 17, 0.6)' }}>EN: {prod.description_en || '-'} | RU: {prod.description_ru || '-'}</div>
                             </td>
-                            <td style={{ fontWeight: '600' }}>{prod.price ? `${prod.price} AZN` : 'Sizes'}</td>
+                            <td style={{ fontWeight: '600' }}>{prod.price ? `${prod.price} AZN` : 'Ölçülər'}</td>
                             <td>
                               <button
                                 onClick={() => toggleProductAvailability(prod)}
@@ -734,13 +734,13 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           {activeTab === 'categories' && (
             <div className="dashboard-panel">
               <div className="panel-header">
-                <h3>Menu Categories ({categories.length})</h3>
+                <h3>Menyu Kateqoriyaları ({categories.length})</h3>
                 <button className="btn btn-primary" onClick={() => {
                   setEditingCat(null);
                   setCatName('');
                   setShowCatModal(true);
                 }}>
-                  <Plus size={16} /> Add Category
+                  <Plus size={16} /> Kateqoriya Əlavə et
                 </button>
               </div>
 
@@ -748,10 +748,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '40px' }}>Rank</th>
-                      <th>Category Name</th>
-                      <th>Items Count</th>
-                      <th>Actions</th>
+                      <th style={{ width: '40px' }}>Sıra</th>
+                      <th>Kateqoriya Adı</th>
+                      <th>Məhsul Sayı</th>
+                      <th>Əməliyyatlar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -771,7 +771,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                               EN: {cat.name_en || '-'} | RU: {cat.name_ru || '-'}
                             </div>
                           </td>
-                          <td>{count} items</td>
+                          <td>{count} məhsul</td>
                           <td className="actions-cell">
                             <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
                               setEditingCat(cat);
@@ -799,13 +799,13 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           {activeTab === 'modifications' && (
             <div className="dashboard-panel">
               <div className="panel-header">
-                <h3>Item Sizes & Custom Prices</h3>
+                <h3>Məhsul Ölçüləri və Qiymətləri</h3>
                 <button className="btn btn-primary" onClick={() => {
                   setEditingMod(null);
                   setModForm({ product_id: products[0]?.id || '', name: '', price: '' });
                   setShowModModal(true);
                 }}>
-                  <Plus size={16} /> Add Custom Price Option
+                  <Plus size={16} /> Xüsusi Qiymət Seçimi Əlavə et
                 </button>
               </div>
 
@@ -813,10 +813,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Product Name</th>
-                      <th>Size/Mod Name</th>
-                      <th>Price</th>
-                      <th>Actions</th>
+                      <th>Məhsulun Adı</th>
+                      <th>Ölçü/Seçim Adı</th>
+                      <th>Qiymət</th>
+                      <th>Əməliyyatlar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -824,7 +824,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                       const prod = products.find(p => p.id === mod.product_id);
                       return (
                         <tr key={mod.id}>
-                          <td style={{ fontWeight: '600' }}>{prod ? prod.name : 'Unknown Product'}</td>
+                          <td style={{ fontWeight: '600' }}>{prod ? prod.name : 'Naməlum Məhsul'}</td>
                           <td>
                             <span style={{ backgroundColor: 'var(--bg-cream-dark)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
                               {mod.name}
@@ -865,15 +865,15 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           {activeTab === 'settings' && (
             <form className="dashboard-panel" onSubmit={handleSaveSettings}>
               <div className="panel-header">
-                <h3>Shop Configuration</h3>
+                <h3>Mağaza Konfiqurasiyası</h3>
                 <button type="submit" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Save size={16} /> Save Settings
+                  <Save size={16} /> Ayarları Yadda Saxla
                 </button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Shop Name</label>
+                  <label className="form-label">Mağaza Adı</label>
                   <input
                     type="text"
                     className="form-control"
@@ -885,7 +885,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label"><Wifi size={14} style={{ marginRight: '4px' }} /> Wi-Fi SSID</label>
+                    <label className="form-label"><Wifi size={14} style={{ marginRight: '4px' }} /> Wi-Fi Şəbəkə Adı (SSID)</label>
                     <input
                       type="text"
                       className="form-control"
@@ -894,7 +894,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Wi-Fi Password</label>
+                    <label className="form-label">Wi-Fi Şifrəsi</label>
                     <input
                       type="text"
                       className="form-control"
@@ -905,7 +905,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label"><MapPin size={14} style={{ marginRight: '4px' }} /> Shop Address</label>
+                  <label className="form-label"><MapPin size={14} style={{ marginRight: '4px' }} /> Mağaza Ünvanı</label>
                   <input
                     type="text"
                     className="form-control"
@@ -916,7 +916,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label"><Instagram size={14} style={{ marginRight: '4px' }} /> Instagram Link</label>
+                    <label className="form-label"><Instagram size={14} style={{ marginRight: '4px' }} /> Instagram Keçidi</label>
                     <input
                       type="url"
                       className="form-control"
@@ -926,7 +926,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label"><Globe size={14} style={{ marginRight: '4px' }} /> TikTok / Web Link</label>
+                    <label className="form-label"><Globe size={14} style={{ marginRight: '4px' }} /> TikTok / Veb Sayt Keçidi</label>
                     <input
                       type="url"
                       className="form-control"
@@ -944,9 +944,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           {activeTab === 'qrcode' && (
             <div className="dashboard-panel" style={{ maxWidth: '600px', margin: '0 auto' }}>
               <div className="panel-header">
-                <h3>Menu QR Code</h3>
+                <h3>Menyu QR Kodu</h3>
                 <button className="btn btn-primary" onClick={handlePrintQR}>
-                  Print QR Menu Card
+                  QR Menyu Kartını Çap Et
                 </button>
               </div>
 
@@ -956,7 +956,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     {settings.shop_name}
                   </h2>
                   <p style={{ fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--wood-medium)', marginTop: '-0.25rem', marginBottom: '1rem' }}>
-                    Scan to view digital menu
+                    Rəqəmsal menyuya baxmaq üçün skan edin
                   </p>
                   
                   <div className="qr-canvas-wrapper">
@@ -967,7 +967,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     <Wifi size={14} /> Wi-Fi: <strong>{settings.wifi_name}</strong>
                   </p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', marginTop: '-0.5rem' }}>
-                    Password: <code>{settings.wifi_pass}</code>
+                    Şifrə: <code>{settings.wifi_pass}</code>
                   </p>
                 </div>
               </div>
@@ -985,48 +985,48 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         <div className="admin-modal-overlay">
           <form className="admin-modal" onSubmit={handleSaveCategory}>
             <div className="admin-modal-header">
-              <h4>{editingCat ? 'Rename Category' : 'Create New Category'}</h4>
+              <h4>{editingCat ? 'Kateqoriyanın Adını Dəyişdir' : 'Yeni Kateqoriya Yarat'}</h4>
               <button type="button" className="close-button" style={{ position: 'static' }} onClick={() => setShowCatModal(false)}>
                 <X size={16} />
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
-                <label className="form-label">Category Name (AZ - Default)</label>
+                <label className="form-label">Kateqoriya Adı (AZ - Standart)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={catName}
                   onChange={(e) => setCatName(e.target.value)}
-                  placeholder="e.g. SETLER"
+                  placeholder="məs. SETLER"
                   required
                   autoFocus
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Category Name (EN - Optional)</label>
+                <label className="form-label">Kateqoriya Adı (EN - İstəyə görə)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={catNameEn}
                   onChange={(e) => setCatNameEn(e.target.value)}
-                  placeholder="e.g. SETS"
+                  placeholder="məs. SETS"
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Category Name (RU - Optional)</label>
+                <label className="form-label">Kateqoriya Adı (RU - İstəyə görə)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={catNameRu}
                   onChange={(e) => setCatNameRu(e.target.value)}
-                  placeholder="e.g. СЕТЫ"
+                  placeholder="məs. СЕТЫ"
                 />
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowCatModal(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary">Save Category</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowCatModal(false)}>İmtina</button>
+              <button type="submit" className="btn btn-primary">Kateqoriyanı Yadda Saxla</button>
             </div>
           </form>
         </div>
@@ -1037,53 +1037,53 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         <div className="admin-modal-overlay">
           <form className="admin-modal" onSubmit={handleSaveProduct}>
             <div className="admin-modal-header">
-              <h4>{editingProd ? 'Edit Menu Item' : 'Add New Menu Item'}</h4>
+              <h4>{editingProd ? 'Məhsula Düzəliş et' : 'Yeni Məhsul Əlavə et'}</h4>
               <button type="button" className="close-button" style={{ position: 'static' }} onClick={() => setShowProdModal(false)}>
                 <X size={16} />
               </button>
             </div>
             <div className="form-grid">
               <div className="form-group form-full">
-                <label className="form-label">Product Name (AZ - Default)</label>
+                <label className="form-label">Məhsulun Adı (AZ - Standart)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={prodForm.name}
                   onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })}
-                  placeholder="e.g. Cortado"
+                  placeholder="məs. Cortado"
                   required
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Product Name (EN - Optional)</label>
+                <label className="form-label">Məhsulun Adı (EN - İstəyə görə)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={prodForm.name_en || ''}
                   onChange={(e) => setProdForm({ ...prodForm, name_en: e.target.value })}
-                  placeholder="e.g. Cortado"
+                  placeholder="məs. Cortado"
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Product Name (RU - Optional)</label>
+                <label className="form-label">Məhsulun Adı (RU - İstəyə görə)</label>
                 <input
                   type="text"
                   className="form-control"
                   value={prodForm.name_ru || ''}
                   onChange={(e) => setProdForm({ ...prodForm, name_ru: e.target.value })}
-                  placeholder="e.g. Кортадо"
+                  placeholder="məs. Кортадо"
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Category</label>
+                <label className="form-label">Kateqoriya</label>
                 <select
                   className="form-control"
                   value={prodForm.category_id}
                   onChange={(e) => setProdForm({ ...prodForm, category_id: e.target.value })}
                   required
                 >
-                  <option value="" disabled>Select category...</option>
+                  <option value="" disabled>Kateqoriya seçin...</option>
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -1091,19 +1091,19 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Base Price (AZN)</label>
+                <label className="form-label">Baza Qiyməti (AZN)</label>
                 <input
                   type="number"
                   step="0.01"
                   className="form-control"
                   value={prodForm.price}
                   onChange={(e) => setProdForm({ ...prodForm, price: e.target.value })}
-                  placeholder="Leave empty if using custom sizes"
+                  placeholder="Seçimlər/ölçülər varsa, boş buraxın"
                 />
               </div>
 
               <div className="form-group form-full">
-                <label className="form-label">Description (AZ - Default)</label>
+                <label className="form-label">Təsvir (AZ - Standart)</label>
                 <textarea
                   className="form-control"
                   rows="2"
@@ -1113,28 +1113,28 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Description (EN - Optional)</label>
+                <label className="form-label">Təsvir (EN - İstəyə görə)</label>
                 <textarea
                   className="form-control"
                   rows="2"
                   value={prodForm.description_en || ''}
                   onChange={(e) => setProdForm({ ...prodForm, description_en: e.target.value })}
-                  placeholder="Ingredients, details..."
+                  placeholder="məs. Ingredients, details..."
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Description (RU - Optional)</label>
+                <label className="form-label">Təsvir (RU - İstəyə görə)</label>
                 <textarea
                   className="form-control"
                   rows="2"
                   value={prodForm.description_ru || ''}
                   onChange={(e) => setProdForm({ ...prodForm, description_ru: e.target.value })}
-                  placeholder="Ингредиенты, детали..."
+                  placeholder="məs. Ингредиенты, детали..."
                 />
               </div>
 
               <div className="form-group form-full">
-                <label className="form-label">Photo URL</label>
+                <label className="form-label">Şəkil URL</label>
                 <input
                   type="url"
                   className="form-control"
@@ -1153,13 +1153,13 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                   {prodForm.is_available ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
                 </button>
                 <span className="form-label" style={{ cursor: 'pointer' }} onClick={() => setProdForm({ ...prodForm, is_available: !prodForm.is_available })}>
-                  Item Available in Menu
+                  Məhsul menyuda mövcuddur
                 </span>
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowProdModal(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary">Save Item</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowProdModal(false)}>İmtina</button>
+              <button type="submit" className="btn btn-primary">Məhsulu Yadda Saxla</button>
             </div>
           </form>
         </div>
@@ -1170,21 +1170,21 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         <div className="admin-modal-overlay">
           <form className="admin-modal" onSubmit={handleSaveMod}>
             <div className="admin-modal-header">
-              <h4>{editingMod ? 'Edit Option Price' : 'Add Size Pricing Option'}</h4>
+              <h4>{editingMod ? 'Seçim Qiymətinə Düzəliş et' : 'Yeni Ölçü və Qiymət Əlavə et'}</h4>
               <button type="button" className="close-button" style={{ position: 'static' }} onClick={() => setShowModModal(false)}>
                 <X size={16} />
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="form-group">
-                <label className="form-label">Target Product</label>
+                <label className="form-label">Müvafiq Məhsul</label>
                 <select
                   className="form-control"
                   value={modForm.product_id}
                   onChange={(e) => setModForm({ ...modForm, product_id: e.target.value })}
                   required
                 >
-                  <option value="" disabled>Select product...</option>
+                  <option value="" disabled>Məhsul seçin...</option>
                   {products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -1194,7 +1194,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Size / Option Name (AZ - Default)</label>
+                    <label className="form-label">Ölçü / Seçim Adı (AZ - Standart)</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1205,7 +1205,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Price (AZN)</label>
+                    <label className="form-label">Qiymət (AZN)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1219,21 +1219,21 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Size Name (EN - Optional)</label>
+                    <label className="form-label">Ölçü Adı (EN - İstəyə görə)</label>
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="e.g. Large"
+                      placeholder="məs. Large"
                       value={modForm.name_en || ''}
                       onChange={(e) => setModForm({ ...modForm, name_en: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Size Name (RU - Optional)</label>
+                    <label className="form-label">Ölçü Adı (RU - İstəyə görə)</label>
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="e.g. Большой"
+                      placeholder="məs. Большой"
                       value={modForm.name_ru || ''}
                       onChange={(e) => setModForm({ ...modForm, name_ru: e.target.value })}
                     />
@@ -1242,8 +1242,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowModModal(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary">Save Option</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowModModal(false)}>İmtina</button>
+              <button type="submit" className="btn btn-primary">Seçimi Yadda Saxla</button>
             </div>
           </form>
         </div>
