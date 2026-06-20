@@ -34,6 +34,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const [modifications, setModifications] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Dialog / Edit states
   const [showCatModal, setShowCatModal] = useState(false);
@@ -583,102 +585,150 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       ) : (
         <>
           {/* TAB 1: PRODUCTS / ITEMS */}
-          {activeTab === 'products' && (
-            <div className="dashboard-panel">
-              <div className="panel-header">
-                <h3>Menu Items ({products.length})</h3>
-                <button className="btn btn-primary" onClick={() => {
-                  setEditingProd(null);
-                  setProdForm({ name: '', category_id: categories[0]?.id || '', description: '', price: '', photo_url: '', is_available: true });
-                  setShowProdModal(true);
-                }}>
-                  <Plus size={16} /> Add New Item
-                </button>
-              </div>
+          {activeTab === 'products' && (() => {
+            const filteredProducts = products.filter(prod => {
+              const query = searchQuery.toLowerCase().trim();
+              if (!query) return true;
+              const nameMatch = prod.name.toLowerCase().includes(query);
+              const nameEnMatch = prod.name_en && prod.name_en.toLowerCase().includes(query);
+              const nameRuMatch = prod.name_ru && prod.name_ru.toLowerCase().includes(query);
+              const descMatch = prod.description && prod.description.toLowerCase().includes(query);
+              const descEnMatch = prod.description_en && prod.description_en.toLowerCase().includes(query);
+              const descRuMatch = prod.description_ru && prod.description_ru.toLowerCase().includes(query);
+              const cat = categories.find(c => c.id === prod.category_id);
+              const catMatch = cat && cat.name.toLowerCase().includes(query);
+              return nameMatch || nameEnMatch || nameRuMatch || descMatch || descEnMatch || descRuMatch || catMatch;
+            });
 
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '40px' }}>Rank</th>
-                      <th>Photo</th>
-                      <th>Name</th>
-                      <th>Category</th>
-                      <th>Description</th>
-                      <th>Base Price</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((prod, index) => {
-                      const cat = categories.find(c => c.id === prod.category_id);
-                      return (
-                        <tr key={prod.id}>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <button onClick={() => moveProduct(index, 'up')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}><ArrowUp size={12} /></button>
-                              <button onClick={() => moveProduct(index, 'down')} disabled={index === products.length - 1} style={{ opacity: index === products.length - 1 ? 0.3 : 1 }}><ArrowDown size={12} /></button>
-                            </div>
-                          </td>
-                          <td>
-                            {prod.photo_url ? (
-                              <img src={prod.photo_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                            ) : (
-                              <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--bg-cream-dark)', borderRadius: '4px' }} />
-                            )}
-                          </td>
-                          <td style={{ fontWeight: '600' }}>
-                            {prod.name}
-                            <div style={{ fontSize: '0.72rem', fontWeight: 'normal', color: 'var(--wood-medium)', marginTop: '4px' }}>
-                              EN: {prod.name_en || '-'} | RU: {prod.name_ru || '-'}
-                            </div>
-                          </td>
-                          <td>{cat ? cat.name : 'Uncategorized'}</td>
-                          <td style={{ fontSize: '0.85rem', color: 'var(--wood-medium)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <div>AZ: {prod.description || '-'}</div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(44, 26, 17, 0.6)' }}>EN: {prod.description_en || '-'} | RU: {prod.description_ru || '-'}</div>
-                          </td>
-                          <td style={{ fontWeight: '600' }}>{prod.price ? `${prod.price} AZN` : 'Sizes'}</td>
-                          <td>
-                            <button
-                              onClick={() => toggleProductAvailability(prod)}
-                              style={{ color: prod.is_available ? 'var(--success)' : 'var(--wood-medium)', background: 'none', border: 'none', cursor: 'pointer' }}
-                            >
-                              {prod.is_available ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                            </button>
-                          </td>
-                          <td className="actions-cell">
-                            <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
-                              setEditingProd(prod);
-                              setProdForm({
-                                name: prod.name,
-                                name_en: prod.name_en || '',
-                                name_ru: prod.name_ru || '',
-                                category_id: prod.category_id,
-                                description: prod.description || '',
-                                description_en: prod.description_en || '',
-                                description_ru: prod.description_ru || '',
-                                price: prod.price !== null ? prod.price.toString() : '',
-                                photo_url: prod.photo_url || '',
-                                is_available: prod.is_available
-                              });
-                              setShowProdModal(true);
-                            }}>
-                              <Edit2 size={14} />
-                            </button>
-                            <button className="btn btn-danger" style={{ padding: '0.3rem 0.6rem' }} onClick={() => handleDeleteProduct(prod.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            return (
+              <div className="dashboard-panel">
+                <div className="panel-header" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: 0 }}>Menu Items ({filteredProducts.length} / {products.length})</h3>
+                  
+                  {/* Search Bar */}
+                  <div style={{ flex: '1', minWidth: '220px', maxWidth: '350px', position: 'relative' }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search items by name, description, or category..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{ paddingLeft: '2.5rem', borderRadius: '8px', width: '100%', height: '38px', margin: 0 }}
+                    />
+                    <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--wood-medium)', display: 'flex', alignItems: 'center' }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.7" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </span>
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--wood-medium)', cursor: 'pointer', fontSize: '1rem', padding: '0.2rem' }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <button className="btn btn-primary" style={{ margin: 0 }} onClick={() => {
+                    setEditingProd(null);
+                    setProdForm({ name: '', name_en: '', name_ru: '', category_id: categories[0]?.id || '', description: '', description_en: '', description_ru: '', price: '', photo_url: '', is_available: true });
+                    setShowProdModal(true);
+                  }}>
+                    <Plus size={16} /> Add New Item
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '60px' }}>Rank</th>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Base Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.map((prod) => {
+                        const index = products.findIndex(p => p.id === prod.id);
+                        const cat = categories.find(c => c.id === prod.category_id);
+                        return (
+                          <tr key={prod.id}>
+                            <td>
+                              {!searchQuery ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <button onClick={() => moveProduct(index, 'up')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}><ArrowUp size={12} /></button>
+                                  <button onClick={() => moveProduct(index, 'down')} disabled={index === products.length - 1} style={{ opacity: index === products.length - 1 ? 0.3 : 1 }}><ArrowDown size={12} /></button>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', fontStyle: 'italic' }}>-</span>
+                              )}
+                            </td>
+                            <td>
+                              {prod.photo_url ? (
+                                <img src={prod.photo_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                              ) : (
+                                <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--bg-cream-dark)', borderRadius: '4px' }} />
+                              )}
+                            </td>
+                            <td style={{ fontWeight: '600' }}>
+                              {prod.name}
+                              <div style={{ fontSize: '0.72rem', fontWeight: 'normal', color: 'var(--wood-medium)', marginTop: '4px' }}>
+                                EN: {prod.name_en || '-'} | RU: {prod.name_ru || '-'}
+                              </div>
+                            </td>
+                            <td>{cat ? cat.name : 'Uncategorized'}</td>
+                            <td style={{ fontSize: '0.85rem', color: 'var(--wood-medium)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div>AZ: {prod.description || '-'}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'rgba(44, 26, 17, 0.6)' }}>EN: {prod.description_en || '-'} | RU: {prod.description_ru || '-'}</div>
+                            </td>
+                            <td style={{ fontWeight: '600' }}>{prod.price ? `${prod.price} AZN` : 'Sizes'}</td>
+                            <td>
+                              <button
+                                onClick={() => toggleProductAvailability(prod)}
+                                style={{ color: prod.is_available ? 'var(--success)' : 'var(--wood-medium)', background: 'none', border: 'none', cursor: 'pointer' }}
+                              >
+                                {prod.is_available ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                              </button>
+                            </td>
+                            <td className="actions-cell">
+                              <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
+                                setEditingProd(prod);
+                                setProdForm({
+                                  name: prod.name,
+                                  name_en: prod.name_en || '',
+                                  name_ru: prod.name_ru || '',
+                                  category_id: prod.category_id,
+                                  description: prod.description || '',
+                                  description_en: prod.description_en || '',
+                                  description_ru: prod.description_ru || '',
+                                  price: prod.price !== null ? prod.price.toString() : '',
+                                  photo_url: prod.photo_url || '',
+                                  is_available: prod.is_available
+                                });
+                                setShowProdModal(true);
+                              }}>
+                                <Edit2 size={14} />
+                              </button>
+                              <button className="btn btn-danger" style={{ padding: '0.3rem 0.6rem' }} onClick={() => handleDeleteProduct(prod.id)}>
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 2: CATEGORIES */}
           {activeTab === 'categories' && (
