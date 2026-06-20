@@ -58,9 +58,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 6. Insert Default Settings
 -- Default admin password is 'luna2026'
--- Hashed (SHA-256) value of 'luna2026' is: 3105a96a928f52230623e1dc285e64811a2f64603957ddbc9ea4666cf64731be
+-- Hashed (SHA-256) value of 'luna2026' is: b35ce111fab10d7303a0bbc4ebde88646f157e8863cbf14a42f3e7c9c2c9c43c
 INSERT INTO settings (key, value) VALUES
-  ('admin_password_hash', '3105a96a928f52230623e1dc285e64811a2f64603957ddbc9ea4666cf64731be'),
+  ('admin_password_hash', 'b35ce111fab10d7303a0bbc4ebde88646f157e8863cbf14a42f3e7c9c2c9c43c'),
   ('wifi_name', 'Coffee Luna'),
   ('wifi_pass', 'Luna2002'),
   ('shop_name', 'Luna Coffee Shop'),
