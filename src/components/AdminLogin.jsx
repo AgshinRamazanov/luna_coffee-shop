@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { KeyRound, Loader, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { sha256 } from 'js-sha256';
 
 export default function AdminLogin({ onLoginSuccess }) {
   const [password, setPassword] = useState('');
@@ -13,25 +14,6 @@ export default function AdminLogin({ onLoginSuccess }) {
     import.meta.env.VITE_SUPABASE_ANON_KEY &&
     supabase
   );
-
-  // Computes SHA-256 hash of a string client-side
-  const computeSHA256 = async (str) => {
-    try {
-      const msgBuffer = new TextEncoder().encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) {
-      console.error('SHA-256 computation failed, using fallback hash:', e);
-      // Fallback simple hash for compatibility
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
-      }
-      return hash.toString(16);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,7 +31,7 @@ export default function AdminLogin({ onLoginSuccess }) {
         }
       } else {
         // Active Supabase mode
-        const hash = await computeSHA256(password);
+        const hash = sha256(password);
         
         // Invoke RPC verify function in Supabase
         const { data: isValid, error } = await supabase.rpc(
