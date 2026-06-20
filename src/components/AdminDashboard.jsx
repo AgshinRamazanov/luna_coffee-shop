@@ -36,6 +36,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [modSearchQuery, setModSearchQuery] = useState('');
   
   // Dialog / Edit states
   const [showCatModal, setShowCatModal] = useState(false);
@@ -796,70 +797,127 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           )}
 
           {/* TAB 3: MODIFICATIONS / PRICING */}
-          {activeTab === 'modifications' && (
-            <div className="dashboard-panel">
-              <div className="panel-header">
-                <h3>Məhsul Ölçüləri və Qiymətləri</h3>
-                <button className="btn btn-primary" onClick={() => {
-                  setEditingMod(null);
-                  setModForm({ product_id: products[0]?.id || '', name: '', price: '' });
-                  setShowModModal(true);
-                }}>
-                  <Plus size={16} /> Xüsusi Qiymət Seçimi Əlavə et
-                </button>
-              </div>
+          {activeTab === 'modifications' && (() => {
+            const filteredMods = modifications.filter(mod => {
+              if (!modSearchQuery) return true;
+              const query = modSearchQuery.toLowerCase().trim();
+              const prod = products.find(p => p.id === mod.product_id);
+              
+              const prodNameMatch = prod && (
+                (prod.name && prod.name.toLowerCase().includes(query)) ||
+                (prod.name_en && prod.name_en.toLowerCase().includes(query)) ||
+                (prod.name_ru && prod.name_ru.toLowerCase().includes(query))
+              );
+              
+              const modNameMatch = (
+                (mod.name && mod.name.toLowerCase().includes(query)) ||
+                (mod.name_en && mod.name_en.toLowerCase().includes(query)) ||
+                (mod.name_ru && mod.name_ru.toLowerCase().includes(query))
+              );
+              
+              return prodNameMatch || modNameMatch;
+            });
 
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Məhsulun Adı</th>
-                      <th>Ölçü/Seçim Adı</th>
-                      <th>Qiymət</th>
-                      <th>Əməliyyatlar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modifications.map((mod) => {
-                      const prod = products.find(p => p.id === mod.product_id);
-                      return (
-                        <tr key={mod.id}>
-                          <td style={{ fontWeight: '600' }}>{prod ? prod.name : 'Naməlum Məhsul'}</td>
-                          <td>
-                            <span style={{ backgroundColor: 'var(--bg-cream-dark)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
-                              {mod.name}
-                            </span>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--wood-medium)', marginTop: '4px' }}>
-                              EN: {mod.name_en || '-'} | RU: {mod.name_ru || '-'}
-                            </div>
-                          </td>
-                          <td style={{ fontWeight: '700', color: 'var(--accent-gold)' }}>{mod.price} AZN</td>
-                          <td className="actions-cell">
-                            <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
-                              setEditingMod(mod);
-                              setModForm({
-                                product_id: mod.product_id,
-                                name: mod.name,
-                                name_en: mod.name_en || '',
-                                name_ru: mod.name_ru || '',
-                                price: mod.price
-                              });
-                              setShowModModal(true);
-                            }}>
-                              <Edit2 size={14} />
-                            </button>
-                            <button className="btn btn-danger" style={{ padding: '0.3rem 0.6rem' }} onClick={() => handleDeleteMod(mod.id)}>
-                              <Trash2 size={14} />
-                            </button>
+            return (
+              <div className="dashboard-panel">
+                <div className="panel-header" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: 0 }}>Məhsul Ölçüləri və Qiymətləri ({filteredMods.length} / {modifications.length})</h3>
+                  
+                  {/* Search Bar */}
+                  <div style={{ flex: '1', minWidth: '220px', maxWidth: '350px', position: 'relative' }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ölçüləri məhsul və ya seçim adına görə axtar..."
+                      value={modSearchQuery}
+                      onChange={(e) => setModSearchQuery(e.target.value)}
+                      style={{ paddingLeft: '2.5rem', borderRadius: '8px', width: '100%', height: '38px', margin: 0 }}
+                    />
+                    <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--wood-medium)', display: 'flex', alignItems: 'center' }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.7" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </span>
+                    {modSearchQuery && (
+                      <button 
+                        onClick={() => setModSearchQuery('')}
+                        style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--wood-medium)', cursor: 'pointer', fontSize: '1rem', padding: '0.2rem' }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <button className="btn btn-primary" onClick={() => {
+                    setEditingMod(null);
+                    setModForm({ product_id: products[0]?.id || '', name: '', price: '' });
+                    setShowModModal(true);
+                  }}>
+                    <Plus size={16} /> Xüsusi Qiymət Seçimi Əlavə et
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Məhsulun Adı</th>
+                        <th>Ölçü/Seçim Adı</th>
+                        <th>Qiymət</th>
+                        <th>Əməliyyatlar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredMods.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--wood-medium)' }}>
+                            Axtarışa uyğun ölçü və ya qiymət seçimi tapılmadı.
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ) : (
+                        filteredMods.map((mod) => {
+                          const prod = products.find(p => p.id === mod.product_id);
+                          return (
+                            <tr key={mod.id}>
+                              <td style={{ fontWeight: '600' }}>{prod ? prod.name : 'Naməlum Məhsul'}</td>
+                              <td>
+                                <span style={{ backgroundColor: 'var(--bg-cream-dark)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                                  {mod.name}
+                                </span>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--wood-medium)', marginTop: '4px' }}>
+                                  EN: {mod.name_en || '-'} | RU: {mod.name_ru || '-'}
+                                </div>
+                              </td>
+                              <td style={{ fontWeight: '700', color: 'var(--accent-gold)' }}>{mod.price} AZN</td>
+                              <td className="actions-cell">
+                                <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
+                                  setEditingMod(mod);
+                                  setModForm({
+                                    product_id: mod.product_id,
+                                    name: mod.name,
+                                    name_en: mod.name_en || '',
+                                    name_ru: mod.name_ru || '',
+                                    price: mod.price
+                                  });
+                                  setShowModModal(true);
+                                }}>
+                                  <Edit2 size={14} />
+                                </button>
+                                <button className="btn btn-danger" style={{ padding: '0.3rem 0.6rem', marginLeft: '0.5rem' }} onClick={() => handleDeleteMod(mod.id)}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 4: SHOP SETTINGS */}
           {activeTab === 'settings' && (
