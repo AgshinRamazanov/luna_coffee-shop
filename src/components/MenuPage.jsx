@@ -316,7 +316,7 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
             <img 
               src={isDarkMode ? "/dark_mode.png" : "/light_mode.png"} 
               alt={settings.shop_name || "Luna Coffee Shop"} 
-              style={{ height: '43px', width: 'auto', display: 'block' }} 
+              style={{ height: '48px', width: 'auto', display: 'block' }} 
             />
             <span style={{ 
               fontFamily: 'var(--font-body)', 
