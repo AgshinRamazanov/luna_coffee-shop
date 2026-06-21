@@ -173,7 +173,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     setDraggedCatIndex(null);
 
     const updated = [...categories];
-    const originalOrders = categories.map(c => c.sort_order);
+    const originalOrders = categories.map(c => c.sort_order).sort((a, b) => a - b);
     const sorted = updated.map((cat, idx) => ({
       ...cat,
       sort_order: originalOrders[idx]
@@ -221,7 +221,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     setDraggedProdIndex(null);
 
     const updated = [...products];
-    const originalOrders = products.map(p => p.sort_order);
+    const originalOrders = products.map(p => p.sort_order).sort((a, b) => a - b);
     const sorted = updated.map((prod, idx) => ({
       ...prod,
       sort_order: originalOrders[idx]
@@ -266,6 +266,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     const tr = element ? element.closest('tr') : null;
     if (!tr) return;
+
+    const dataType = tr.getAttribute('data-type');
+    if (dataType !== type) return;
 
     const dataIndexAttr = tr.getAttribute('data-index');
     if (dataIndexAttr === null) return;
