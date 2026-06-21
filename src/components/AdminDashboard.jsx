@@ -907,12 +907,28 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                         const index = products.findIndex(p => p.id === prod.id);
                         const cat = categories.find(c => c.id === prod.category_id);
                         return (
-                          <tr key={prod.id}>
+                          <tr 
+                            key={prod.id}
+                            data-type="product"
+                            data-index={index}
+                            draggable={!searchQuery}
+                            onDragStart={(e) => handleProdDragStart(e, index)}
+                            onDragOver={(e) => handleProdDragOver(e, index)}
+                            onDragEnd={handleProdDragEnd}
+                            className={`draggable-row ${draggedProdIndex === index ? 'dragging-row' : ''}`}
+                          >
                             <td>
                               {!searchQuery ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                  <button onClick={() => moveProduct(index, 'up')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}><ArrowUp size={12} /></button>
-                                  <button onClick={() => moveProduct(index, 'down')} disabled={index === products.length - 1} style={{ opacity: index === products.length - 1 ? 0.3 : 1 }}><ArrowDown size={12} /></button>
+                                <div 
+                                  className="drag-handle"
+                                  draggable={false}
+                                  onTouchStart={(e) => handleTouchStart(e, index, 'product')}
+                                  onTouchMove={handleTouchMove}
+                                  onTouchEnd={handleTouchEnd}
+                                  style={{ touchAction: 'none' }}
+                                  title="Sıralamanı dəyişmək üçün sürüşdürün"
+                                >
+                                  <GripVertical size={16} />
                                 </div>
                               ) : (
                                 <span style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', fontStyle: 'italic' }}>-</span>
@@ -1006,11 +1022,27 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                     {categories.map((cat, index) => {
                       const count = products.filter(p => p.category_id === cat.id).length;
                       return (
-                        <tr key={cat.id}>
+                        <tr 
+                          key={cat.id}
+                          data-type="category"
+                          data-index={index}
+                          draggable={true}
+                          onDragStart={(e) => handleCatDragStart(e, index)}
+                          onDragOver={(e) => handleCatDragOver(e, index)}
+                          onDragEnd={handleCatDragEnd}
+                          className={`draggable-row ${draggedCatIndex === index ? 'dragging-row' : ''}`}
+                        >
                           <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <button onClick={() => moveCategory(index, 'up')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}><ArrowUp size={12} /></button>
-                              <button onClick={() => moveCategory(index, 'down')} disabled={index === categories.length - 1} style={{ opacity: index === categories.length - 1 ? 0.3 : 1 }}><ArrowDown size={12} /></button>
+                            <div 
+                              className="drag-handle"
+                              draggable={false}
+                              onTouchStart={(e) => handleTouchStart(e, index, 'category')}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                              style={{ touchAction: 'none' }}
+                              title="Sıralamanı dəyişmək üçün sürüşdürün"
+                            >
+                              <GripVertical size={16} />
                             </div>
                           </td>
                           <td style={{ fontWeight: '600' }}>
