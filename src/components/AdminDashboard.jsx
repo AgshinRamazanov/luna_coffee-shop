@@ -616,10 +616,6 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       }
     }
 
-    if (activeMods.length > 0) {
-      basePrice = null;
-    }
-
     try {
       if (isDemoMode) {
         let updatedProds = [...products];
@@ -1092,7 +1088,15 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                               <div>AZ: {prod.description || '-'}</div>
                               <div style={{ fontSize: '0.72rem', color: 'rgba(44, 26, 17, 0.6)' }}>EN: {prod.description_en || '-'} | RU: {prod.description_ru || '-'}</div>
                             </td>
-                            <td style={{ fontWeight: '600' }}>{prod.price ? `${prod.price} AZN` : 'Ölçülər'}</td>
+                            <td style={{ fontWeight: '600' }}>
+                              {prod.price !== null && prod.price !== undefined ? `${prod.price} AZN` : ''}
+                              {modifications.some(m => m.product_id === prod.id) && (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--wood-medium)', display: 'block', fontWeight: 'normal', marginTop: '2px' }}>
+                                  {prod.price !== null && prod.price !== undefined ? '(Ölçülər)' : 'Ölçülər'}
+                                </span>
+                              )}
+                              {(prod.price === null || prod.price === undefined) && !modifications.some(m => m.product_id === prod.id) && '-'}
+                            </td>
                             <td>
                               <button
                                 onClick={() => toggleProductAvailability(prod)}
