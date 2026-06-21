@@ -62,7 +62,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     description_ru: '',
     price: '',
     photo_url: '',
-    is_available: true
+    is_available: true,
+    mods: []
   });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -567,6 +568,32 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     }
   };
 
+  const handleAddModRow = () => {
+    setProdForm(prev => ({
+      ...prev,
+      mods: [
+        ...prev.mods,
+        { id: '', name: '', name_en: '', name_ru: '', price: '' }
+      ]
+    }));
+  };
+
+  const handleModRowChange = (index, field, value) => {
+    setProdForm(prev => {
+      const updatedMods = prev.mods.map((mod, idx) => 
+        idx === index ? { ...mod, [field]: value } : mod
+      );
+      return { ...prev, mods: updatedMods };
+    });
+  };
+
+  const handleRemoveModRow = (index) => {
+    setProdForm(prev => ({
+      ...prev,
+      mods: prev.mods.filter((_, idx) => idx !== index)
+    }));
+  };
+
   // ----------------------------------------------------
   // PRODUCTS CRUD
   // ----------------------------------------------------
@@ -574,11 +601,16 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     e.preventDefault();
     if (!prodForm.name.trim() || !prodForm.category_id) return;
 
-    const basePrice = prodForm.price === '' ? null : parseFloat(prodForm.price);
+    let basePrice = prodForm.price === '' ? null : parseFloat(prodForm.price);
+    if (prodForm.mods && prodForm.mods.length > 0) {
+      basePrice = null;
+    }
 
     try {
       if (isDemoMode) {
         let updatedProds = [...products];
+        const prodId = editingProd ? editingProd.id : 'p-' + Date.now().toString();
+
         if (editingProd) {
           updatedProds = updatedProds.map(p => p.id === editingProd.id ? { 
             ...p, 
@@ -595,7 +627,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           } : p);
         } else {
           const newProd = {
-            id: 'p-' + Date.now().toString(),
+            id: prodId,
             name: prodForm.name,
             name_en: prodForm.name_en,
             name_ru: prodForm.name_ru,
@@ -613,6 +645,23 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         const sortedProds = sortProductsByMenuOrder(updatedProds, categories);
         setProducts(sortedProds);
         localStorage.setItem('luna_demo_products', JSON.stringify(sortedProds));
+
+        // Save modifications for demo mode
+        let updatedMods = modifications.filter(m => m.product_id !== prodId);
+        if (prodForm.mods && prodForm.mods.length > 0) {
+          const newMods = prodForm.mods.map(m => ({
+            id: m.id && m.id.startsWith('m-') ? m.id : 'm-' + Math.random().toString(36).substr(2, 9),
+            product_id: prodId,
+            name: m.name,
+            name_en: m.name_en || '',
+            name_ru: m.name_ru || '',
+            price: parseFloat(m.price)
+          }));
+          updatedMods = [...updatedMods, ...newMods];
+        }
+        setModifications(updatedMods);
+        localStorage.setItem('luna_demo_modifications', JSON.stringify(updatedMods));
+
         triggerToast('Məhsul yadda saxlanıldı.');
       } else {
         const payload = {
@@ -628,14 +677,35 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           is_available: prodForm.is_available
         };
 
+        let prodId;
         if (editingProd) {
-          const { error } = await supabase.from('products').update(payload).eq('id', editingProd.id);
+          prodId = editingProd.id;
+          const { error } = await supabase.from('products').update(payload).eq('id', prodId);
           if (error) throw error;
         } else {
           const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sort_order)) + 1 : 0;
-          const { error } = await supabase.from('products').insert({ ...payload, sort_order: maxOrder });
+          const { data, error } = await supabase.from('products').insert({ ...payload, sort_order: maxOrder }).select('id').single();
           if (error) throw error;
+          prodId = data.id;
         }
+
+        // Delete all old modifications for this product ID
+        const { error: delErr } = await supabase.from('modifications').delete().eq('product_id', prodId);
+        if (delErr) throw delErr;
+
+        // Insert new modifications
+        if (prodForm.mods && prodForm.mods.length > 0) {
+          const modsPayload = prodForm.mods.map(m => ({
+            product_id: prodId,
+            name: m.name,
+            name_en: m.name_en || null,
+            name_ru: m.name_ru || null,
+            price: parseFloat(m.price)
+          }));
+          const { error: insErr } = await supabase.from('modifications').insert(modsPayload);
+          if (insErr) throw insErr;
+        }
+
         fetchData();
         triggerToast('Məhsul yadda saxlanıldı.');
       }
@@ -924,7 +994,19 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
                   <button className="btn btn-primary" style={{ margin: 0 }} onClick={() => {
                     setEditingProd(null);
-                    setProdForm({ name: '', name_en: '', name_ru: '', category_id: categories[0]?.id || '', description: '', description_en: '', description_ru: '', price: '', photo_url: '', is_available: true });
+                    setProdForm({
+                      name: '',
+                      name_en: '',
+                      name_ru: '',
+                      category_id: categories[0]?.id || '',
+                      description: '',
+                      description_en: '',
+                      description_ru: '',
+                      price: '',
+                      photo_url: '',
+                      is_available: true,
+                      mods: []
+                    });
                     setShowProdModal(true);
                   }}>
                     <Plus size={16} /> Yeni Məhsul Əlavə et
@@ -1008,6 +1090,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                             <td className="actions-cell">
                               <button className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem' }} onClick={() => {
                                 setEditingProd(prod);
+                                const prodMods = modifications.filter(m => m.product_id === prod.id);
                                 setProdForm({
                                   name: prod.name,
                                   name_en: prod.name_en || '',
@@ -1018,7 +1101,14 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                                   description_ru: prod.description_ru || '',
                                   price: prod.price !== null ? prod.price.toString() : '',
                                   photo_url: prod.photo_url || '',
-                                  is_available: prod.is_available
+                                  is_available: prod.is_available,
+                                  mods: prodMods.map(m => ({
+                                    id: m.id,
+                                    name: m.name,
+                                    name_en: m.name_en || '',
+                                    name_ru: m.name_ru || '',
+                                    price: m.price.toString()
+                                  }))
                                 });
                                 setShowProdModal(true);
                               }}>
@@ -1482,6 +1572,86 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                   onChange={(e) => setProdForm({ ...prodForm, price: e.target.value })}
                   placeholder="Seçimlər/ölçülər varsa, boş buraxın"
                 />
+              </div>
+
+              <div className="form-group form-full" style={{ borderTop: '1px solid var(--bg-cream-dark)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span className="form-label" style={{ fontWeight: 'bold', margin: 0 }}>Məhsul Ölçüləri və Qiymətləri</span>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.3rem 0.75rem', fontSize: '0.85rem', margin: 0 }}
+                    onClick={handleAddModRow}
+                  >
+                    + Ölçü Əlavə Et
+                  </button>
+                </div>
+                
+                {prodForm.mods && prodForm.mods.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {prodForm.mods.map((mod, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', background: 'var(--bg-cream)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--bg-cream-dark)' }}>
+                        <div style={{ flex: '1', minWidth: '120px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', display: 'block', marginBottom: '0.2rem' }}>Ad (AZ)</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            style={{ height: '32px', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                            value={mod.name}
+                            onChange={(e) => handleModRowChange(idx, 'name', e.target.value)}
+                            placeholder="məs. Böyük"
+                            required
+                          />
+                        </div>
+                        <div style={{ flex: '1', minWidth: '120px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', display: 'block', marginBottom: '0.2rem' }}>Ad (EN)</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            style={{ height: '32px', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                            value={mod.name_en || ''}
+                            onChange={(e) => handleModRowChange(idx, 'name_en', e.target.value)}
+                            placeholder="məs. Large"
+                          />
+                        </div>
+                        <div style={{ flex: '1', minWidth: '120px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', display: 'block', marginBottom: '0.2rem' }}>Ad (RU)</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            style={{ height: '32px', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                            value={mod.name_ru || ''}
+                            onChange={(e) => handleModRowChange(idx, 'name_ru', e.target.value)}
+                            placeholder="məs. Большой"
+                          />
+                        </div>
+                        <div style={{ width: '90px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--wood-medium)', display: 'block', marginBottom: '0.2rem' }}>Qiymət</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="form-control"
+                            style={{ height: '32px', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                            value={mod.price}
+                            onChange={(e) => handleModRowChange(idx, 'price', e.target.value)}
+                            placeholder="Qiymət"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ padding: '0.35rem', marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', minWidth: '32px', margin: 0 }}
+                          onClick={() => handleRemoveModRow(idx)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--wood-medium)', margin: 0, fontStyle: 'italic' }}>Heç bir ölçü əlavə edilməyib (Məhsul tək baza qiyməti ilə satılır).</p>
+                )}
               </div>
 
               <div className="form-group form-full">
