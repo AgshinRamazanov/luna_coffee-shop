@@ -6,7 +6,7 @@ import {
   FolderEdit, Coffee, Settings, QrCode, LogOut, ArrowLeft, 
   Plus, Edit2, Trash2, Check, X, ArrowUp, ArrowDown, Wifi, 
   MapPin, Globe, Sliders, ToggleLeft, ToggleRight,
-  Eye, Save
+  Eye, Save, Upload
 } from 'lucide-react';
 
 const Instagram = ({ size = 24, ...props }) => (
@@ -59,6 +59,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     photo_url: '',
     is_available: true
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [showModModal, setShowModModal] = useState(false);
   const [editingMod, setEditingMod] = useState(null);
@@ -247,6 +248,60 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       console.error(err);
       triggerToast('Sıralamanın yenilənməsində xəta baş verdi.');
       setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      triggerToast('Fayl çox böyükdür (Maksimum 5MB).');
+      return;
+    }
+
+    setUploadingPhoto(true);
+
+    try {
+      if (isDemoMode) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setProdForm(prev => ({ ...prev, photo_url: reader.result }));
+          setUploadingPhoto(false);
+          triggerToast('Şəkil yükləndi (Demo rejimində Base64 kimi saxlanıldı).');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { data, error: uploadError } = await supabase.storage
+          .from('product-photos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('Upload error details:', uploadError);
+          throw new Error(
+            'Şəkil yüklənmədi. Zəhmət olmasa Supabase panelinizdə Storage bölməsinə daxil olub "product-photos" adında Public (İctimai) bucket yaradın və təkrar yoxlayın.'
+          );
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-photos')
+          .getPublicUrl(filePath);
+
+        setProdForm(prev => ({ ...prev, photo_url: publicUrl }));
+        setUploadingPhoto(false);
+        triggerToast('Şəkil uğurla yükləndi.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Şəkil yüklənməsində xəta baş verdi.');
+      setUploadingPhoto(false);
     }
   };
 
@@ -1192,14 +1247,71 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
               </div>
 
               <div className="form-group form-full">
-                <label className="form-label">Şəkil URL</label>
-                <input
-                  type="url"
-                  className="form-control"
-                  value={prodForm.photo_url}
-                  onChange={(e) => setProdForm({ ...prodForm, photo_url: e.target.value })}
-                  placeholder="https://example.com/photo.jpg"
-                />
+                <label className="form-label">Məhsul Şəkli (Cihazdan yükləyin və ya URL daxil edin)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <label 
+                      className="btn btn-secondary" 
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem', 
+                        cursor: 'pointer',
+                        margin: 0,
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <Upload size={16} />
+                      {uploadingPhoto ? 'Yüklənir...' : 'Cihazdan Şəkil Seç'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handlePhotoUpload} 
+                        style={{ display: 'none' }}
+                        disabled={uploadingPhoto}
+                      />
+                    </label>
+                    {prodForm.photo_url && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ color: 'var(--danger)', border: '1px solid var(--danger)', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                        onClick={() => setProdForm({ ...prodForm, photo_url: '' })}
+                      >
+                        Şəkli Sil
+                      </button>
+                    )}
+                  </div>
+                  
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={prodForm.photo_url}
+                    onChange={(e) => setProdForm({ ...prodForm, photo_url: e.target.value })}
+                    placeholder="Və ya birbaşa şəkil URL-i daxil edin..."
+                  />
+
+                  {prodForm.photo_url && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}>
+                      <span className="form-label" style={{ fontSize: '0.8rem' }}>Ön baxış:</span>
+                      <img
+                        src={prodForm.photo_url}
+                        alt="Ön baxış"
+                        style={{
+                          maxWidth: '150px',
+                          maxHeight: '120px',
+                          borderRadius: 'var(--radius-md)',
+                          objectFit: 'cover',
+                          border: '1px solid var(--bg-cream-dark)'
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="form-group form-full" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
