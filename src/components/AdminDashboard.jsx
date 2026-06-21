@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import QRCode from 'qrcode';
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MODIFICATIONS, INITIAL_SETTINGS } from '../initialData';
 import { 
-  FolderEdit, Coffee, Settings, QrCode, LogOut, ArrowLeft, 
-  Plus, Edit2, Trash2, Check, X, ArrowUp, ArrowDown, Wifi, 
+  FolderEdit, Coffee, Settings, QrCode, LogOut, 
+  Plus, Edit2, Trash2, X, Wifi, 
   MapPin, Globe, Sliders, ToggleLeft, ToggleRight,
   Eye, Save, Upload, GripVertical
 } from 'lucide-react';
@@ -34,6 +34,11 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const [modifications, setModifications] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+
+  const categoriesRef = useRef([]);
+  const productsRef = useRef([]);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  useEffect(() => { productsRef.current = products; }, [products]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [modSearchQuery, setModSearchQuery] = useState('');
@@ -80,6 +85,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const draggedCatIndexRef = useRef(null);
   const draggedProdIndexRef = useRef(null);
   const touchState = useRef({ startIndex: null, currentIndex: null, type: null, draggedId: null });
+  const initialCatOrderRef = useRef([]);
+  const initialProdOrderRef = useRef([]);
 
   // Trigger Toast Alert
   const triggerToast = (msg) => {
@@ -87,14 +94,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     setTimeout(() => setToast(''), 3000);
   };
 
-  // Load database structures
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       if (isDemoMode || !supabase) {
         // Force migration to version 4 to load the full menu list
         const currentVersion = localStorage.getItem('luna_demo_version');
@@ -149,19 +151,31 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       console.error(e);
       triggerToast('Məlumatların yüklənməsində xəta baş verdi.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
+  // Load database structures
+  useEffect(() => {
+    const load = async () => {
+      await fetchData();
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Categories drag & drop handlers
-  const handleCatDragStart = (e, index) => {
+  const handleCatDragStart = (e) => {
+    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+    initialCatOrderRef.current = categoriesRef.current.map(c => c.id);
     draggedCatIndexRef.current = index;
     setDraggedCatIndex(index);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleCatDragOver = (e, index) => {
+  const handleCatDragOver = (e) => {
     e.preventDefault();
+    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
     const currentIdx = draggedCatIndexRef.current;
     if (currentIdx === null || currentIdx === index) return;
 
@@ -177,11 +191,20 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   const handleCatDragEnd = async () => {
     if (draggedCatIndexRef.current === null) return;
+
+    const currentIds = categoriesRef.current.map(c => c.id);
+    const hasChanged = JSON.stringify(currentIds) !== JSON.stringify(initialCatOrderRef.current);
+    if (!hasChanged) {
+      setDraggedCatIndex(null);
+      draggedCatIndexRef.current = null;
+      return;
+    }
+
     draggedCatIndexRef.current = null;
     setDraggedCatIndex(null);
 
-    const updated = [...categories];
-    const originalOrders = categories.map(c => c.sort_order).sort((a, b) => a - b);
+    const updated = [...categoriesRef.current];
+    const originalOrders = categoriesRef.current.map(c => c.sort_order).sort((a, b) => a - b);
     const sorted = updated.map((cat, idx) => ({
       ...cat,
       sort_order: originalOrders[idx]
@@ -193,32 +216,32 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       if (isDemoMode) {
         localStorage.setItem('luna_demo_categories', JSON.stringify(sorted));
       } else {
-        setLoading(true);
-        await Promise.all(sorted.map(async cat => {
-          const { error } = await supabase.from('categories').update({ sort_order: cat.sort_order }).eq('id', cat.id);
-          if (error) throw error;
-        }));
-        await fetchData();
+        const payload = sorted.map(cat => ({ id: cat.id, sort_order: cat.sort_order }));
+        const { error } = await supabase.from('categories').upsert(payload);
+        if (error) throw error;
+        await fetchData(true);
       }
       triggerToast('Sıralama yeniləndi.');
     } catch (err) {
       console.error(err);
       triggerToast('Sıralamanın yenilənməsində xəta baş verdi.');
-      await fetchData();
-      setLoading(false);
+      await fetchData(true);
     }
   };
 
   // Products drag & drop handlers
-  const handleProdDragStart = (e, index) => {
+  const handleProdDragStart = (e) => {
     if (searchQuery) return;
+    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+    initialProdOrderRef.current = productsRef.current.map(p => p.id);
     draggedProdIndexRef.current = index;
     setDraggedProdIndex(index);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleProdDragOver = (e, index) => {
+  const handleProdDragOver = (e) => {
     e.preventDefault();
+    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
     const currentIdx = draggedProdIndexRef.current;
     if (currentIdx === null || currentIdx === index) return;
 
@@ -234,11 +257,20 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   const handleProdDragEnd = async () => {
     if (draggedProdIndexRef.current === null) return;
+
+    const currentIds = productsRef.current.map(p => p.id);
+    const hasChanged = JSON.stringify(currentIds) !== JSON.stringify(initialProdOrderRef.current);
+    if (!hasChanged) {
+      setDraggedProdIndex(null);
+      draggedProdIndexRef.current = null;
+      return;
+    }
+
     draggedProdIndexRef.current = null;
     setDraggedProdIndex(null);
 
-    const updated = [...products];
-    const originalOrders = products.map(p => p.sort_order).sort((a, b) => a - b);
+    const updated = [...productsRef.current];
+    const originalOrders = productsRef.current.map(p => p.sort_order).sort((a, b) => a - b);
     const sorted = updated.map((prod, idx) => ({
       ...prod,
       sort_order: originalOrders[idx]
@@ -250,36 +282,37 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       if (isDemoMode) {
         localStorage.setItem('luna_demo_products', JSON.stringify(sorted));
       } else {
-        setLoading(true);
-        await Promise.all(sorted.map(async prod => {
-          const { error } = await supabase.from('products').update({ sort_order: prod.sort_order }).eq('id', prod.id);
-          if (error) throw error;
-        }));
-        await fetchData();
+        const payload = sorted.map(prod => ({ id: prod.id, sort_order: prod.sort_order }));
+        const { error } = await supabase.from('products').upsert(payload);
+        if (error) throw error;
+        await fetchData(true);
       }
       triggerToast('Məhsulların sıralaması yeniləndi.');
     } catch (err) {
       console.error(err);
       triggerToast('Məhsul sıralamasının yenilənməsində xəta baş verdi.');
-      await fetchData();
-      setLoading(false);
+      await fetchData(true);
     }
   };
 
   // Touch handlers for mobile
-  const handleTouchStart = (e, index, type) => {
+  const handleTouchStart = (e) => {
+    const target = e.currentTarget;
+    const index = parseInt(target.getAttribute('data-index'), 10);
+    const type = target.getAttribute('data-type');
     if (type === 'product' && searchQuery) return;
-    const item = type === 'category' ? categories[index] : products[index];
+    const item = type === 'category' ? categoriesRef.current[index] : productsRef.current[index];
     const draggedId = item ? item.id : null;
     touchState.current = { startIndex: index, currentIndex: index, type, draggedId };
     if (type === 'category') {
+      initialCatOrderRef.current = categoriesRef.current.map(c => c.id);
       draggedCatIndexRef.current = index;
       setDraggedCatIndex(index);
     } else {
+      initialProdOrderRef.current = productsRef.current.map(p => p.id);
       draggedProdIndexRef.current = index;
       setDraggedProdIndex(index);
     }
-    if (e.cancelable) e.preventDefault();
   };
 
   const handleTouchMove = (e) => {
@@ -411,37 +444,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     }
   };
 
-  const moveCategory = async (index, direction) => {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= categories.length) return;
 
-    const updated = [...categories];
-    // Swap sort orders
-    const temp = updated[index].sort_order;
-    updated[index].sort_order = updated[newIndex].sort_order;
-    updated[newIndex].sort_order = temp;
-
-    const sorted = updated.sort((a,b) => a.sort_order - b.sort_order);
-    setCategories(sorted);
-
-    try {
-      if (isDemoMode) {
-        localStorage.setItem('luna_demo_categories', JSON.stringify(sorted));
-      } else {
-        setLoading(true);
-        // Bulk update categories in Supabase
-        for (const cat of sorted) {
-          await supabase.from('categories').update({ sort_order: cat.sort_order }).eq('id', cat.id);
-        }
-        fetchData();
-      }
-      triggerToast('Sıralama yeniləndi.');
-    } catch (err) {
-      console.error(err);
-      triggerToast('Sıralamanın yenilənməsində xəta baş verdi.');
-      setLoading(false);
-    }
-  };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
@@ -468,7 +471,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const { data, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('product-photos')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -618,35 +621,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     }
   };
 
-  const moveProduct = async (index, direction) => {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= products.length) return;
 
-    const updated = [...products];
-    const temp = updated[index].sort_order;
-    updated[index].sort_order = updated[newIndex].sort_order;
-    updated[newIndex].sort_order = temp;
-
-    const sorted = updated.sort((a,b) => a.sort_order - b.sort_order);
-    setProducts(sorted);
-
-    try {
-      if (isDemoMode) {
-        localStorage.setItem('luna_demo_products', JSON.stringify(sorted));
-      } else {
-        setLoading(true);
-        for (const prod of sorted) {
-          await supabase.from('products').update({ sort_order: prod.sort_order }).eq('id', prod.id);
-        }
-        fetchData();
-      }
-      triggerToast('Məhsulların sıralaması yeniləndi.');
-    } catch (err) {
-      console.error(err);
-      triggerToast('Məhsul sıralamasının yenilənməsində xəta baş verdi.');
-      setLoading(false);
-    }
-  };
 
   // ----------------------------------------------------
   // MODIFICATIONS CRUD (Sizes & Options)
@@ -911,18 +886,19 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                             key={prod.id}
                             data-type="product"
                             data-index={index}
-                            draggable={!searchQuery}
-                            onDragStart={(e) => handleProdDragStart(e, index)}
-                            onDragOver={(e) => handleProdDragOver(e, index)}
-                            onDragEnd={handleProdDragEnd}
+                            onDragOver={handleProdDragOver}
                             className={`draggable-row ${draggedProdIndex === index ? 'dragging-row' : ''}`}
                           >
                             <td>
                               {!searchQuery ? (
                                 <div 
                                   className="drag-handle"
-                                  draggable={false}
-                                  onTouchStart={(e) => handleTouchStart(e, index, 'product')}
+                                  draggable={true}
+                                  data-type="product"
+                                  data-index={index}
+                                  onDragStart={handleProdDragStart}
+                                  onDragEnd={handleProdDragEnd}
+                                  onTouchStart={handleTouchStart}
                                   onTouchMove={handleTouchMove}
                                   onTouchEnd={handleTouchEnd}
                                   style={{ touchAction: 'none' }}
@@ -1026,17 +1002,18 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                           key={cat.id}
                           data-type="category"
                           data-index={index}
-                          draggable={true}
-                          onDragStart={(e) => handleCatDragStart(e, index)}
-                          onDragOver={(e) => handleCatDragOver(e, index)}
-                          onDragEnd={handleCatDragEnd}
+                          onDragOver={handleCatDragOver}
                           className={`draggable-row ${draggedCatIndex === index ? 'dragging-row' : ''}`}
                         >
                           <td>
                             <div 
                               className="drag-handle"
-                              draggable={false}
-                              onTouchStart={(e) => handleTouchStart(e, index, 'category')}
+                              draggable={true}
+                              data-type="category"
+                              data-index={index}
+                              onDragStart={handleCatDragStart}
+                              onDragEnd={handleCatDragEnd}
+                              onTouchStart={handleTouchStart}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
                               style={{ touchAction: 'none' }}
