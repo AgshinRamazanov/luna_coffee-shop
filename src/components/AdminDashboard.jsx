@@ -6,7 +6,7 @@ import {
   FolderEdit, Coffee, Settings, QrCode, LogOut, ArrowLeft, 
   Plus, Edit2, Trash2, Check, X, ArrowUp, ArrowDown, Wifi, 
   MapPin, Globe, Sliders, ToggleLeft, ToggleRight,
-  Eye, Save, Upload
+  Eye, Save, Upload, GripVertical
 } from 'lucide-react';
 
 const Instagram = ({ size = 24, ...props }) => (
@@ -74,6 +74,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const [toast, setToast] = useState('');
 
   const qrCanvasRef = useRef(null);
+
+  const [draggedCatIndex, setDraggedCatIndex] = useState(null);
+  const [draggedProdIndex, setDraggedProdIndex] = useState(null);
+  const touchState = useRef({ startIndex: null, currentIndex: null, type: null });
 
   // Trigger Toast Alert
   const triggerToast = (msg) => {
@@ -144,6 +148,158 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       triggerToast('Məlumatların yüklənməsində xəta baş verdi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Categories drag & drop handlers
+  const handleCatDragStart = (e, index) => {
+    setDraggedCatIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleCatDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedCatIndex === null || draggedCatIndex === index) return;
+
+    const updated = [...categories];
+    const [draggedItem] = updated.splice(draggedCatIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    setCategories(updated);
+    setDraggedCatIndex(index);
+  };
+
+  const handleCatDragEnd = async () => {
+    if (draggedCatIndex === null) return;
+    setDraggedCatIndex(null);
+
+    const updated = [...categories];
+    const originalOrders = categories.map(c => c.sort_order);
+    const sorted = updated.map((cat, idx) => ({
+      ...cat,
+      sort_order: originalOrders[idx]
+    }));
+
+    setCategories(sorted);
+
+    try {
+      if (isDemoMode) {
+        localStorage.setItem('luna_demo_categories', JSON.stringify(sorted));
+      } else {
+        setLoading(true);
+        for (const cat of sorted) {
+          await supabase.from('categories').update({ sort_order: cat.sort_order }).eq('id', cat.id);
+        }
+        fetchData();
+      }
+      triggerToast('Sıralama yeniləndi.');
+    } catch (err) {
+      console.error(err);
+      triggerToast('Sıralamanın yenilənməsində xəta baş verdi.');
+      setLoading(false);
+    }
+  };
+
+  // Products drag & drop handlers
+  const handleProdDragStart = (e, index) => {
+    setDraggedProdIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleProdDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedProdIndex === null || draggedProdIndex === index) return;
+
+    const updated = [...products];
+    const [draggedItem] = updated.splice(draggedProdIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    setProducts(updated);
+    setDraggedProdIndex(index);
+  };
+
+  const handleProdDragEnd = async () => {
+    if (draggedProdIndex === null) return;
+    setDraggedProdIndex(null);
+
+    const updated = [...products];
+    const originalOrders = products.map(p => p.sort_order);
+    const sorted = updated.map((prod, idx) => ({
+      ...prod,
+      sort_order: originalOrders[idx]
+    }));
+
+    setProducts(sorted);
+
+    try {
+      if (isDemoMode) {
+        localStorage.setItem('luna_demo_products', JSON.stringify(sorted));
+      } else {
+        setLoading(true);
+        for (const prod of sorted) {
+          await supabase.from('products').update({ sort_order: prod.sort_order }).eq('id', prod.id);
+        }
+        fetchData();
+      }
+      triggerToast('Məhsulların sıralaması yeniləndi.');
+    } catch (err) {
+      console.error(err);
+      triggerToast('Məhsul sıralamasının yenilənməsində xəta baş verdi.');
+      setLoading(false);
+    }
+  };
+
+  // Touch handlers for mobile
+  const handleTouchStart = (e, index, type) => {
+    touchState.current = { startIndex: index, currentIndex: index, type };
+    if (type === 'category') {
+      setDraggedCatIndex(index);
+    } else {
+      setDraggedProdIndex(index);
+    }
+    if (e.cancelable) e.preventDefault();
+  };
+
+  const handleTouchMove = (e) => {
+    const { startIndex, currentIndex, type } = touchState.current;
+    if (startIndex === null) return;
+
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const tr = element ? element.closest('tr') : null;
+    if (!tr) return;
+
+    const dataIndexAttr = tr.getAttribute('data-index');
+    if (dataIndexAttr === null) return;
+
+    const targetIndex = parseInt(dataIndexAttr, 10);
+    if (isNaN(targetIndex) || targetIndex === currentIndex) return;
+
+    if (type === 'category') {
+      const updated = [...categories];
+      const [draggedItem] = updated.splice(currentIndex, 1);
+      updated.splice(targetIndex, 0, draggedItem);
+      setCategories(updated);
+      setDraggedCatIndex(targetIndex);
+    } else {
+      const updated = [...products];
+      const [draggedItem] = updated.splice(currentIndex, 1);
+      updated.splice(targetIndex, 0, draggedItem);
+      setProducts(updated);
+      setDraggedProdIndex(targetIndex);
+    }
+
+    touchState.current.currentIndex = targetIndex;
+  };
+
+  const handleTouchEnd = () => {
+    const { startIndex, type } = touchState.current;
+    if (startIndex === null) return;
+
+    touchState.current = { startIndex: null, currentIndex: null, type: null };
+
+    if (type === 'category') {
+      handleCatDragEnd();
+    } else {
+      handleProdDragEnd();
     }
   };
 
