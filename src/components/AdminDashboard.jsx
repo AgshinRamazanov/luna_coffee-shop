@@ -94,6 +94,19 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     setTimeout(() => setToast(''), 3000);
   };
 
+  const sortProductsByMenuOrder = (prodsList, catsList) => {
+    const catMap = {};
+    catsList.forEach(c => {
+      catMap[c.id] = c.sort_order;
+    });
+    return [...prodsList].sort((a, b) => {
+      const orderA = catMap[a.category_id] ?? 0;
+      const orderB = catMap[b.category_id] ?? 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.sort_order - b.sort_order;
+    });
+  };
+
   const fetchData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
@@ -118,8 +131,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         const initialMods = storedMods ? JSON.parse(storedMods) : INITIAL_MODIFICATIONS;
         const initialSets = storedSets ? JSON.parse(storedSets) : INITIAL_SETTINGS;
 
-        setCategories(initialCats.sort((a,b) => a.sort_order - b.sort_order));
-        setProducts(initialProds.sort((a,b) => a.sort_order - b.sort_order));
+        const sortedCats = initialCats.sort((a,b) => a.sort_order - b.sort_order);
+        setCategories(sortedCats);
+        setProducts(sortProductsByMenuOrder(initialProds, sortedCats));
         setModifications(initialMods);
         setSettings(initialSets);
 
@@ -142,8 +156,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           });
         }
 
-        setCategories(cats || []);
-        setProducts(prods || []);
+        const sortedCats = cats || [];
+        setCategories(sortedCats);
+        setProducts(sortProductsByMenuOrder(prods || [], sortedCats));
         setModifications(mods || []);
         setSettings(settingsObj);
       }
@@ -215,8 +230,16 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     try {
       if (isDemoMode) {
         localStorage.setItem('luna_demo_categories', JSON.stringify(sorted));
+        setProducts(sortProductsByMenuOrder(products, sorted));
       } else {
-        const payload = sorted.map(cat => ({ id: cat.id, sort_order: cat.sort_order }));
+        const payload = sorted.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          name_en: cat.name_en || null,
+          name_ru: cat.name_ru || null,
+          sort_order: cat.sort_order,
+          created_at: cat.created_at
+        }));
         const { error } = await supabase.from('categories').upsert(payload);
         if (error) throw error;
         await fetchData(true);
@@ -266,23 +289,65 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       return;
     }
 
+    const finalIdx = draggedProdIndexRef.current;
     draggedProdIndexRef.current = null;
     setDraggedProdIndex(null);
 
     const updated = [...productsRef.current];
+    const draggedItem = updated[finalIdx];
+
+    // Determine if the dragged product changed categories based on its new neighbors in the list
+    if (updated.length > 1 && draggedItem) {
+      let targetCategoryId;
+      if (finalIdx === 0) {
+        targetCategoryId = updated[1].category_id;
+      } else if (finalIdx === updated.length - 1) {
+        targetCategoryId = updated[updated.length - 2].category_id;
+      } else {
+        const prevCatId = updated[finalIdx - 1].category_id;
+        const nextCatId = updated[finalIdx + 1].category_id;
+        if (prevCatId === nextCatId) {
+          targetCategoryId = prevCatId;
+        } else {
+          // Boundary: default to previous item's category
+          targetCategoryId = prevCatId;
+        }
+      }
+
+      if (draggedItem.category_id !== targetCategoryId) {
+        draggedItem.category_id = targetCategoryId;
+      }
+    }
+
     const originalOrders = productsRef.current.map(p => p.sort_order).sort((a, b) => a - b);
     const sorted = updated.map((prod, idx) => ({
       ...prod,
       sort_order: originalOrders[idx]
     }));
 
-    setProducts(sorted);
+    // In state, make sure it is sorted correctly by the helper
+    const menuSorted = sortProductsByMenuOrder(sorted, categories);
+    setProducts(menuSorted);
 
     try {
       if (isDemoMode) {
-        localStorage.setItem('luna_demo_products', JSON.stringify(sorted));
+        localStorage.setItem('luna_demo_products', JSON.stringify(menuSorted));
       } else {
-        const payload = sorted.map(prod => ({ id: prod.id, sort_order: prod.sort_order }));
+        const payload = menuSorted.map(prod => ({
+          id: prod.id,
+          category_id: prod.category_id,
+          name: prod.name,
+          name_en: prod.name_en || null,
+          name_ru: prod.name_ru || null,
+          description: prod.description || null,
+          description_en: prod.description_en || null,
+          description_ru: prod.description_ru || null,
+          price: prod.price || null,
+          photo_url: prod.photo_url || null,
+          is_available: prod.is_available,
+          sort_order: prod.sort_order,
+          created_at: prod.created_at
+        }));
         const { error } = await supabase.from('products').upsert(payload);
         if (error) throw error;
         await fetchData(true);
@@ -394,8 +459,10 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           };
           updatedCats.push(newCat);
         }
-        setCategories(updatedCats.sort((a,b) => a.sort_order - b.sort_order));
-        localStorage.setItem('luna_demo_categories', JSON.stringify(updatedCats));
+        const sortedCats = updatedCats.sort((a,b) => a.sort_order - b.sort_order);
+        setCategories(sortedCats);
+        setProducts(sortProductsByMenuOrder(products, sortedCats));
+        localStorage.setItem('luna_demo_categories', JSON.stringify(sortedCats));
         triggerToast('Kateqoriya yadda saxlanıldı.');
       } else {
         const payload = { name: catName, name_en: catNameEn || null, name_ru: catNameRu || null };
@@ -543,8 +610,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           };
           updatedProds.push(newProd);
         }
-        setProducts(updatedProds.sort((a,b) => a.sort_order - b.sort_order));
-        localStorage.setItem('luna_demo_products', JSON.stringify(updatedProds));
+        const sortedProds = sortProductsByMenuOrder(updatedProds, categories);
+        setProducts(sortedProds);
+        localStorage.setItem('luna_demo_products', JSON.stringify(sortedProds));
         triggerToast('Məhsul yadda saxlanıldı.');
       } else {
         const payload = {
