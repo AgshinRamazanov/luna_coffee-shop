@@ -77,6 +77,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   const [draggedCatIndex, setDraggedCatIndex] = useState(null);
   const [draggedProdIndex, setDraggedProdIndex] = useState(null);
+  const draggedCatIndexRef = useRef(null);
+  const draggedProdIndexRef = useRef(null);
   const touchState = useRef({ startIndex: null, currentIndex: null, type: null, draggedId: null });
 
   // Trigger Toast Alert
@@ -153,23 +155,29 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   // Categories drag & drop handlers
   const handleCatDragStart = (e, index) => {
+    draggedCatIndexRef.current = index;
     setDraggedCatIndex(index);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleCatDragOver = (e, index) => {
     e.preventDefault();
-    if (draggedCatIndex === null || draggedCatIndex === index) return;
+    const currentIdx = draggedCatIndexRef.current;
+    if (currentIdx === null || currentIdx === index) return;
 
-    const updated = [...categories];
-    const [draggedItem] = updated.splice(draggedCatIndex, 1);
-    updated.splice(index, 0, draggedItem);
-    setCategories(updated);
+    setCategories(prev => {
+      const updated = [...prev];
+      const [draggedItem] = updated.splice(currentIdx, 1);
+      updated.splice(index, 0, draggedItem);
+      return updated;
+    });
+    draggedCatIndexRef.current = index;
     setDraggedCatIndex(index);
   };
 
   const handleCatDragEnd = async () => {
-    if (draggedCatIndex === null) return;
+    if (draggedCatIndexRef.current === null) return;
+    draggedCatIndexRef.current = null;
     setDraggedCatIndex(null);
 
     const updated = [...categories];
@@ -186,10 +194,11 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         localStorage.setItem('luna_demo_categories', JSON.stringify(sorted));
       } else {
         setLoading(true);
-        await Promise.all(sorted.map(cat => 
-          supabase.from('categories').update({ sort_order: cat.sort_order }).eq('id', cat.id)
-        ));
-        fetchData();
+        await Promise.all(sorted.map(async cat => {
+          const { error } = await supabase.from('categories').update({ sort_order: cat.sort_order }).eq('id', cat.id);
+          if (error) throw error;
+        }));
+        await fetchData();
       }
       triggerToast('Sıralama yeniləndi.');
     } catch (err) {
@@ -202,23 +211,30 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   // Products drag & drop handlers
   const handleProdDragStart = (e, index) => {
+    if (searchQuery) return;
+    draggedProdIndexRef.current = index;
     setDraggedProdIndex(index);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleProdDragOver = (e, index) => {
     e.preventDefault();
-    if (draggedProdIndex === null || draggedProdIndex === index) return;
+    const currentIdx = draggedProdIndexRef.current;
+    if (currentIdx === null || currentIdx === index) return;
 
-    const updated = [...products];
-    const [draggedItem] = updated.splice(draggedProdIndex, 1);
-    updated.splice(index, 0, draggedItem);
-    setProducts(updated);
+    setProducts(prev => {
+      const updated = [...prev];
+      const [draggedItem] = updated.splice(currentIdx, 1);
+      updated.splice(index, 0, draggedItem);
+      return updated;
+    });
+    draggedProdIndexRef.current = index;
     setDraggedProdIndex(index);
   };
 
   const handleProdDragEnd = async () => {
-    if (draggedProdIndex === null) return;
+    if (draggedProdIndexRef.current === null) return;
+    draggedProdIndexRef.current = null;
     setDraggedProdIndex(null);
 
     const updated = [...products];
@@ -235,10 +251,11 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         localStorage.setItem('luna_demo_products', JSON.stringify(sorted));
       } else {
         setLoading(true);
-        await Promise.all(sorted.map(prod => 
-          supabase.from('products').update({ sort_order: prod.sort_order }).eq('id', prod.id)
-        ));
-        fetchData();
+        await Promise.all(sorted.map(async prod => {
+          const { error } = await supabase.from('products').update({ sort_order: prod.sort_order }).eq('id', prod.id);
+          if (error) throw error;
+        }));
+        await fetchData();
       }
       triggerToast('Məhsulların sıralaması yeniləndi.');
     } catch (err) {
@@ -251,12 +268,15 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
   // Touch handlers for mobile
   const handleTouchStart = (e, index, type) => {
+    if (type === 'product' && searchQuery) return;
     const item = type === 'category' ? categories[index] : products[index];
     const draggedId = item ? item.id : null;
     touchState.current = { startIndex: index, currentIndex: index, type, draggedId };
     if (type === 'category') {
+      draggedCatIndexRef.current = index;
       setDraggedCatIndex(index);
     } else {
+      draggedProdIndexRef.current = index;
       setDraggedProdIndex(index);
     }
     if (e.cancelable) e.preventDefault();
@@ -280,26 +300,27 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     const targetIndex = parseInt(dataIndexAttr, 10);
     if (isNaN(targetIndex) || targetIndex === currentIndex) return;
 
+    touchState.current.currentIndex = targetIndex;
     if (type === 'category') {
+      draggedCatIndexRef.current = targetIndex;
+      setDraggedCatIndex(targetIndex);
       setCategories(prev => {
         const currIdx = prev.findIndex(c => c.id === draggedId);
         if (currIdx === -1 || currIdx === targetIndex) return prev;
         const updated = [...prev];
         const [draggedItem] = updated.splice(currIdx, 1);
         updated.splice(targetIndex, 0, draggedItem);
-        touchState.current.currentIndex = targetIndex;
-        setDraggedCatIndex(targetIndex);
         return updated;
       });
     } else {
+      draggedProdIndexRef.current = targetIndex;
+      setDraggedProdIndex(targetIndex);
       setProducts(prev => {
         const currIdx = prev.findIndex(p => p.id === draggedId);
         if (currIdx === -1 || currIdx === targetIndex) return prev;
         const updated = [...prev];
         const [draggedItem] = updated.splice(currIdx, 1);
         updated.splice(targetIndex, 0, draggedItem);
-        touchState.current.currentIndex = targetIndex;
-        setDraggedProdIndex(targetIndex);
         return updated;
       });
     }
