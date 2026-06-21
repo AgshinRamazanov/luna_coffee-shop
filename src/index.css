@@ -398,13 +398,46 @@ button {
   background-color: rgba(var(--wood-dark-rgb), 0.1);
 }
 
-.modal-photo {
+.modal-photo-container {
+  position: relative;
   width: 100%;
   height: 260px;
-  object-fit: cover;
   border-radius: var(--radius-md);
   margin-bottom: 1.25rem;
+  overflow: hidden;
   background-color: var(--bg-cream-dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-photo-blur {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(16px) brightness(0.85);
+  transform: scale(1.1); /* Avoid white/transparent border bleed */
+  z-index: 1;
+  opacity: 0.9;
+  transition: filter var(--transition);
+}
+
+.dark-theme .modal-photo-blur {
+  filter: blur(16px) brightness(0.5);
+  opacity: 0.8;
+}
+
+.modal-photo {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  z-index: 2;
 }
 
 .modal-title {

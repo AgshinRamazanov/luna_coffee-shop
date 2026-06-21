@@ -463,11 +463,18 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
             </button>
             
             {selectedItem.photo_url && (
-              <img
-                src={selectedItem.photo_url}
-                alt={getTranslatedName(selectedItem)}
-                className="modal-photo"
-              />
+              <div className="modal-photo-container">
+                <img
+                  src={selectedItem.photo_url}
+                  alt=""
+                  className="modal-photo-blur"
+                />
+                <img
+                  src={selectedItem.photo_url}
+                  alt={getTranslatedName(selectedItem)}
+                  className="modal-photo"
+                />
+              </div>
             )}
 
             <h2 className="modal-title">{getTranslatedName(selectedItem)}</h2>
