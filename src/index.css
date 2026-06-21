@@ -401,7 +401,7 @@ button {
 .modal-photo {
   width: 100%;
   height: 220px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--radius-md);
   margin-bottom: 1.25rem;
   background-color: var(--bg-cream-dark);
