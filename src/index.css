@@ -842,3 +842,34 @@ button {
   color: var(--bg-cream-light);
 }
 
+/* Drag and Drop Reordering */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: var(--wood-medium);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.drag-handle:hover {
+  background-color: var(--bg-cream-dark);
+  color: var(--wood-dark);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.draggable-row {
+  transition: background-color 0.2s;
+}
+
+.dragging-row {
+  opacity: 0.5;
+  background-color: var(--bg-cream-dark) !important;
+  border: 1px dashed var(--wood-medium);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
