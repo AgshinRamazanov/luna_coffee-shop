@@ -601,8 +601,22 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     e.preventDefault();
     if (!prodForm.name.trim() || !prodForm.category_id) return;
 
-    let basePrice = prodForm.price === '' ? null : parseFloat(prodForm.price);
-    if (prodForm.mods && prodForm.mods.length > 0) {
+    // Filter out modifications that are completely blank (both name and price are empty)
+    const activeMods = (prodForm.mods || []).filter(m => {
+      const hasName = m.name && m.name.toString().trim() !== '';
+      const hasPrice = m.price && m.price.toString().trim() !== '';
+      return hasName || hasPrice;
+    });
+
+    let basePrice = null;
+    if (prodForm.price !== undefined && prodForm.price !== null && prodForm.price.toString().trim() !== '') {
+      const parsed = parseFloat(prodForm.price);
+      if (!isNaN(parsed)) {
+        basePrice = parsed;
+      }
+    }
+
+    if (activeMods.length > 0) {
       basePrice = null;
     }
 
@@ -648,14 +662,14 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
         // Save modifications for demo mode
         let updatedMods = modifications.filter(m => m.product_id !== prodId);
-        if (prodForm.mods && prodForm.mods.length > 0) {
-          const newMods = prodForm.mods.map(m => ({
+        if (activeMods.length > 0) {
+          const newMods = activeMods.map(m => ({
             id: m.id && m.id.startsWith('m-') ? m.id : 'm-' + Math.random().toString(36).substr(2, 9),
             product_id: prodId,
             name: m.name,
             name_en: m.name_en || '',
             name_ru: m.name_ru || '',
-            price: parseFloat(m.price)
+            price: m.price ? parseFloat(m.price) : 0
           }));
           updatedMods = [...updatedMods, ...newMods];
         }
@@ -694,13 +708,13 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         if (delErr) throw delErr;
 
         // Insert new modifications
-        if (prodForm.mods && prodForm.mods.length > 0) {
-          const modsPayload = prodForm.mods.map(m => ({
+        if (activeMods.length > 0) {
+          const modsPayload = activeMods.map(m => ({
             product_id: prodId,
             name: m.name,
             name_en: m.name_en || null,
             name_ru: m.name_ru || null,
-            price: parseFloat(m.price)
+            price: m.price ? parseFloat(m.price) : 0
           }));
           const { error: insErr } = await supabase.from('modifications').insert(modsPayload);
           if (insErr) throw insErr;
