@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MenuPage from './components/MenuPage';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import { supabase } from './supabase';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash || '#/');
@@ -22,19 +23,37 @@ function App() {
     }
   }, [isDarkMode]);
 
-  // Track hash routing changes
+  // Track hash routing changes and session checks
   useEffect(() => {
     const handleHashChange = () => {
       setCurrentRoute(window.location.hash || '#/');
     };
     
-    // Initial auth check
-    const sessionToken = sessionStorage.getItem('luna_admin_session');
-    if (sessionToken) {
-      setIsAuthenticated(true);
-      setIsDemoMode(sessionToken === 'demo-session-token');
-    }
+    const checkSession = async () => {
+      const sessionToken = sessionStorage.getItem('luna_admin_session');
+      if (sessionToken === 'demo-session-token') {
+        setIsAuthenticated(true);
+        setIsDemoMode(true);
+        return;
+      }
 
+      // Check for active Supabase Auth session
+      const hasEnv = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && supabase;
+      if (hasEnv) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setIsAuthenticated(true);
+            setIsDemoMode(false);
+            sessionStorage.setItem('luna_admin_session', session.access_token);
+          }
+        } catch (err) {
+          console.error('Error restoring session:', err);
+        }
+      }
+    };
+
+    checkSession();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -46,8 +65,16 @@ function App() {
     window.location.hash = '#/admin';
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     sessionStorage.removeItem('luna_admin_session');
+    const hasEnv = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && supabase;
+    if (hasEnv) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error signing out:', err);
+      }
+    }
     setIsAuthenticated(false);
     setIsDemoMode(false);
     window.location.hash = '#/';

@@ -4,6 +4,7 @@ import { KeyRound, Loader, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { sha256 } from 'js-sha256';
 
 export default function AdminLogin({ onLoginSuccess }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,31 +23,29 @@ export default function AdminLogin({ onLoginSuccess }) {
 
     try {
       if (!isSupabaseConfigured) {
-        // Fallback demo mode login (passcode: 'luna2026')
-        if (password === 'luna2026') {
+        // Fallback demo mode login (email: 'admin@luna.local' / password: 'luna2026')
+        if (email.trim() === 'admin@luna.local' && password === 'luna2026') {
           sessionStorage.setItem('luna_admin_session', 'demo-session-token');
           onLoginSuccess(true, true); // (authenticated, isDemoMode)
         } else {
-          setErrorMsg('Yanlış keçid şifrəsi! (İpucu: Demo rejimi üçün "luna2026" istifadə edin)');
+          setErrorMsg('Yanlış e-poçt və ya şifrə! (İpucu: Demo rejimi üçün email: "admin@luna.local", şifrə: "luna2026" istifadə edin)');
         }
       } else {
-        // Active Supabase mode
-        const hash = sha256(password);
-        
-        // Invoke RPC verify function in Supabase
-        const { data: isValid, error } = await supabase.rpc(
-          'verify_admin_password', 
-          { input_hash: hash }
-        );
+        // Active Supabase mode with secure Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
 
-        if (error) throw error;
+        if (error) {
+          setErrorMsg('Giriş alınmadı. E-poçt və ya şifrə yanlışdır.');
+          console.error('Sign-in error:', error.message);
+          return;
+        }
 
-        if (isValid) {
-          // Store token in session storage
-          sessionStorage.setItem('luna_admin_session', hash);
+        if (data.user) {
+          sessionStorage.setItem('luna_admin_session', data.session.access_token);
           onLoginSuccess(true, false); // (authenticated, isDemoMode)
-        } else {
-          setErrorMsg('Yanlış admin şifrəsi. Yenidən cəhd edin.');
         }
       }
     } catch (err) {
@@ -86,7 +85,7 @@ export default function AdminLogin({ onLoginSuccess }) {
           <div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Admin Girişi</h2>
             <p style={{ fontSize: '0.9rem', color: 'var(--wood-medium)' }}>
-              Kateqoriyaları, məhsulları və qiymətləri idarə etmək üçün şifrəni daxil edin.
+              Kateqoriyaları, məhsulları və qiymətləri idarə etmək üçün giriş məlumatlarını daxil edin.
             </p>
           </div>
 
@@ -105,7 +104,7 @@ export default function AdminLogin({ onLoginSuccess }) {
             }}>
               <AlertTriangle size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <strong>Yerli Demo Rejimi:</strong> Supabase açarları hələ təyin edilmədiyi üçün admin panelinə daxil olmaq üçün standart şifrədən istifadə edə bilərsiniz: <code>luna2026</code>.
+                <strong>Yerli Demo Rejimi:</strong> Supabase açarları hələ təyin edilmədiyi üçün admin panelinə daxil olmaq üçün standart məlumatlardan istifadə edə bilərsiniz: E-poçt: <code>admin@luna.local</code>, Şifrə: <code>luna2026</code>.
               </div>
             </div>
           )}
@@ -125,7 +124,22 @@ export default function AdminLogin({ onLoginSuccess }) {
           )}
 
           <div className="form-group">
-            <label className="form-label" htmlFor="admin-pass">Keçid şifrəsi</label>
+            <label className="form-label" htmlFor="admin-email">E-poçt ünvanı</label>
+            <input
+              type="email"
+              id="admin-email"
+              className="form-control"
+              placeholder="admin@luna.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label className="form-label" htmlFor="admin-pass">Şifrə</label>
             <input
               type="password"
               id="admin-pass"
@@ -135,7 +149,6 @@ export default function AdminLogin({ onLoginSuccess }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              autoFocus
             />
           </div>
 
@@ -143,11 +156,11 @@ export default function AdminLogin({ onLoginSuccess }) {
             type="submit"
             className="btn btn-primary"
             disabled={loading}
-            style={{ width: '100%', padding: '0.85rem' }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '1.5rem' }}
           >
             {loading ? (
               <>
-                <Loader className="animate-spin" size={18} style={{ animation: 'spin 1.5s linear infinite' }} /> Şifrə yoxlanılır...
+                <Loader className="animate-spin" size={18} style={{ animation: 'spin 1.5s linear infinite' }} /> Giriş yoxlanılır...
               </>
             ) : (
               'Daxil ol'
