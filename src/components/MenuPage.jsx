@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { Search, X, Wifi, MapPin, Globe, Loader, Sun, Moon } from 'lucide-react';
 
@@ -86,6 +86,37 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
 
   const categoryRefs = useRef({});
   const categoriesNavRef = useRef(null);
+
+  function loadMockData() {
+    // Force migration to version 5 to load the full menu list with translations
+    const currentVersion = localStorage.getItem('luna_demo_version');
+    if (currentVersion !== 'v5') {
+      localStorage.setItem('luna_demo_categories', JSON.stringify(INITIAL_CATEGORIES));
+      localStorage.setItem('luna_demo_products', JSON.stringify(INITIAL_PRODUCTS));
+      localStorage.setItem('luna_demo_modifications', JSON.stringify(INITIAL_MODIFICATIONS));
+      localStorage.setItem('luna_demo_settings', JSON.stringify(INITIAL_SETTINGS));
+      localStorage.setItem('luna_demo_version', 'v5');
+    }
+
+    const storedCats = localStorage.getItem('luna_demo_categories');
+    const storedProds = localStorage.getItem('luna_demo_products');
+    const storedMods = localStorage.getItem('luna_demo_modifications');
+    const storedSets = localStorage.getItem('luna_demo_settings');
+
+    const loadedCats = storedCats ? JSON.parse(storedCats) : INITIAL_CATEGORIES;
+    const loadedProds = storedProds ? JSON.parse(storedProds) : INITIAL_PRODUCTS;
+    const loadedMods = storedMods ? JSON.parse(storedMods) : INITIAL_MODIFICATIONS;
+    const loadedSets = storedSets ? JSON.parse(storedSets) : INITIAL_SETTINGS;
+
+    setCategories(loadedCats.sort((a,b) => a.sort_order - b.sort_order));
+    setProducts(loadedProds.sort((a,b) => a.sort_order - b.sort_order));
+    setModifications(loadedMods);
+    setSettings(loadedSets);
+
+    if (loadedCats.length > 0) {
+      setActiveCategory(loadedCats[0].id);
+    }
+  }
 
   // Load menu data from Supabase or Fallback to Mock Data
   useEffect(() => {
@@ -185,36 +216,7 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
     return item.description;
   };
 
-  const loadMockData = () => {
-    // Force migration to version 5 to load the full menu list with translations
-    const currentVersion = localStorage.getItem('luna_demo_version');
-    if (currentVersion !== 'v5') {
-      localStorage.setItem('luna_demo_categories', JSON.stringify(INITIAL_CATEGORIES));
-      localStorage.setItem('luna_demo_products', JSON.stringify(INITIAL_PRODUCTS));
-      localStorage.setItem('luna_demo_modifications', JSON.stringify(INITIAL_MODIFICATIONS));
-      localStorage.setItem('luna_demo_settings', JSON.stringify(INITIAL_SETTINGS));
-      localStorage.setItem('luna_demo_version', 'v5');
-    }
 
-    const storedCats = localStorage.getItem('luna_demo_categories');
-    const storedProds = localStorage.getItem('luna_demo_products');
-    const storedMods = localStorage.getItem('luna_demo_modifications');
-    const storedSets = localStorage.getItem('luna_demo_settings');
-
-    const loadedCats = storedCats ? JSON.parse(storedCats) : INITIAL_CATEGORIES;
-    const loadedProds = storedProds ? JSON.parse(storedProds) : INITIAL_PRODUCTS;
-    const loadedMods = storedMods ? JSON.parse(storedMods) : INITIAL_MODIFICATIONS;
-    const loadedSets = storedSets ? JSON.parse(storedSets) : INITIAL_SETTINGS;
-
-    setCategories(loadedCats.sort((a,b) => a.sort_order - b.sort_order));
-    setProducts(loadedProds.sort((a,b) => a.sort_order - b.sort_order));
-    setModifications(loadedMods);
-    setSettings(loadedSets);
-
-    if (loadedCats.length > 0) {
-      setActiveCategory(loadedCats[0].id);
-    }
-  };
 
   // Scroll category section into view
   const scrollToCategory = (categoryId) => {

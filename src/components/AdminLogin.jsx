@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../supabase';
 import { KeyRound, Loader, AlertTriangle, ArrowLeft } from 'lucide-react';
-import { sha256 } from 'js-sha256';
+
 
 export default function AdminLogin({ onLoginSuccess }) {
   const [email, setEmail] = useState('');

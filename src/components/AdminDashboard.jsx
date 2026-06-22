@@ -85,6 +85,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   const [draggedProdIndex, setDraggedProdIndex] = useState(null);
   const draggedCatIndexRef = useRef(null);
   const draggedProdIndexRef = useRef(null);
+  const draggedProdIdRef = useRef(null);
   const touchState = useRef({ startIndex: null, currentIndex: null, type: null, draggedId: null });
   const initialCatOrderRef = useRef([]);
   const initialProdOrderRef = useRef([]);
@@ -134,13 +135,48 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
         const sortedCats = initialCats.sort((a,b) => a.sort_order - b.sort_order);
         setCategories(sortedCats);
-        setProducts(sortProductsByMenuOrder(initialProds, sortedCats));
         setModifications(initialMods);
         setSettings(initialSets);
 
-        // Save back just in case they were not initialized
+        // Detect duplicates
+        const categoriesWithDuplicates = [];
+        sortedCats.forEach(cat => {
+          const catProds = initialProds.filter(p => p.category_id === cat.id);
+          const orders = catProds.map(p => p.sort_order);
+          const hasDuplicates = new Set(orders).size !== orders.length;
+          if (hasDuplicates) {
+            categoriesWithDuplicates.push(cat.id);
+          }
+        });
+
+        let finalProds = initialProds;
+        if (categoriesWithDuplicates.length > 0) {
+          const repairedProds = [...initialProds];
+          categoriesWithDuplicates.forEach(catId => {
+            const catProds = repairedProds.filter(p => p.category_id === catId);
+            catProds.sort((a, b) => {
+              if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+              return a.name.localeCompare(b.name);
+            });
+            catProds.forEach((prod, idx) => {
+              const originalIndex = repairedProds.findIndex(p => p.id === prod.id);
+              if (originalIndex !== -1) {
+                repairedProds[originalIndex] = {
+                  ...repairedProds[originalIndex],
+                  sort_order: idx
+                };
+              }
+            });
+          });
+          finalProds = repairedProds;
+          setProducts(sortProductsByMenuOrder(repairedProds, sortedCats));
+        } else {
+          setProducts(sortProductsByMenuOrder(initialProds, sortedCats));
+        }
+
+        // Save back just in case they were not initialized or repaired
         localStorage.setItem('luna_demo_categories', JSON.stringify(initialCats));
-        localStorage.setItem('luna_demo_products', JSON.stringify(initialProds));
+        localStorage.setItem('luna_demo_products', JSON.stringify(finalProds));
         localStorage.setItem('luna_demo_modifications', JSON.stringify(initialMods));
         localStorage.setItem('luna_demo_settings', JSON.stringify(initialSets));
       } else {
@@ -159,9 +195,76 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
         const sortedCats = cats || [];
         setCategories(sortedCats);
-        setProducts(sortProductsByMenuOrder(prods || [], sortedCats));
+        const prodsList = prods || [];
         setModifications(mods || []);
         setSettings(settingsObj);
+
+        // Detect duplicates
+        const categoriesWithDuplicates = [];
+        sortedCats.forEach(cat => {
+          const catProds = prodsList.filter(p => p.category_id === cat.id);
+          const orders = catProds.map(p => p.sort_order);
+          const hasDuplicates = new Set(orders).size !== orders.length;
+          if (hasDuplicates) {
+            categoriesWithDuplicates.push(cat.id);
+          }
+        });
+
+        if (categoriesWithDuplicates.length > 0) {
+          console.log("Auto-repairing corrupted sort orders in categories:", categoriesWithDuplicates);
+          const repairedProds = [...prodsList];
+          categoriesWithDuplicates.forEach(catId => {
+            const catProds = repairedProds.filter(p => p.category_id === catId);
+            catProds.sort((a, b) => {
+              if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+              return a.name.localeCompare(b.name);
+            });
+            catProds.forEach((prod, idx) => {
+              const originalIndex = repairedProds.findIndex(p => p.id === prod.id);
+              if (originalIndex !== -1) {
+                repairedProds[originalIndex] = {
+                  ...repairedProds[originalIndex],
+                  sort_order: idx
+                };
+              }
+            });
+          });
+
+          // Set state immediately with repaired prods so UI is instantly correct
+          setProducts(sortProductsByMenuOrder(repairedProds, sortedCats));
+
+          const repairPayload = repairedProds.filter(p => {
+            const original = prodsList.find(op => op.id === p.id);
+            return original && original.sort_order !== p.sort_order;
+          }).map(prod => ({
+            id: prod.id,
+            category_id: prod.category_id,
+            name: prod.name,
+            name_en: prod.name_en || null,
+            name_ru: prod.name_ru || null,
+            description: prod.description || null,
+            description_en: prod.description_en || null,
+            description_ru: prod.description_ru || null,
+            price: prod.price || null,
+            photo_url: prod.photo_url || null,
+            is_available: prod.is_available,
+            sort_order: prod.sort_order,
+            created_at: prod.created_at
+          }));
+
+          if (repairPayload.length > 0) {
+            supabase.from('products').upsert(repairPayload).then(({ error }) => {
+              if (!error) {
+                console.log("Database auto-repair finished successfully!");
+                fetchData(true);
+              } else {
+                console.error("Database auto-repair failed:", error);
+              }
+            });
+          }
+        } else {
+          setProducts(sortProductsByMenuOrder(prodsList, sortedCats));
+        }
       }
     } catch (e) {
       console.error(e);
@@ -195,12 +298,12 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     const currentIdx = draggedCatIndexRef.current;
     if (currentIdx === null || currentIdx === index) return;
 
-    setCategories(prev => {
-      const updated = [...prev];
-      const [draggedItem] = updated.splice(currentIdx, 1);
-      updated.splice(index, 0, draggedItem);
-      return updated;
-    });
+    const updated = [...categoriesRef.current];
+    const [draggedItem] = updated.splice(currentIdx, 1);
+    updated.splice(index, 0, draggedItem);
+    categoriesRef.current = updated;
+    setCategories(updated);
+
     draggedCatIndexRef.current = index;
     setDraggedCatIndex(index);
   };
@@ -256,85 +359,90 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
   // Products drag & drop handlers
   const handleProdDragStart = (e) => {
     if (searchQuery) return;
-    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+    // Read stable ID from data-id attribute (not index, which can become stale)
+    const draggedId = e.currentTarget.getAttribute('data-id');
+    if (!draggedId) return;
+    const currentIdx = productsRef.current.findIndex(p => p.id === draggedId);
+    if (currentIdx === -1) return;
     initialProdOrderRef.current = productsRef.current.map(p => p.id);
-    draggedProdIndexRef.current = index;
-    setDraggedProdIndex(index);
+    draggedProdIdRef.current = draggedId;
+    draggedProdIndexRef.current = currentIdx;
+    setDraggedProdIndex(currentIdx);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleProdDragOver = (e) => {
     e.preventDefault();
-    const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
-    const currentIdx = draggedProdIndexRef.current;
-    if (currentIdx === null || currentIdx === index) return;
+    const draggedId = draggedProdIdRef.current;
+    if (!draggedId) return;
 
-    setProducts(prev => {
-      const updated = [...prev];
-      const [draggedItem] = updated.splice(currentIdx, 1);
-      updated.splice(index, 0, draggedItem);
-      return updated;
-    });
-    draggedProdIndexRef.current = index;
-    setDraggedProdIndex(index);
+    // Use stable ID from data-id to identify the target row
+    const targetId = e.currentTarget.getAttribute('data-id');
+    if (!targetId || targetId === draggedId) return;
+
+    // Find current positions by ID (always accurate, never stale)
+    const allProds = productsRef.current;
+    const fromIdx = allProds.findIndex(p => p.id === draggedId);
+    const toIdx = allProds.findIndex(p => p.id === targetId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+
+    const draggedItem = allProds[fromIdx];
+    const targetItem = allProds[toIdx];
+
+    // Only allow reordering within the same category
+    if (draggedItem.category_id !== targetItem.category_id) return;
+
+    const updated = [...allProds];
+    updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, draggedItem);
+    productsRef.current = updated;
+    setProducts(updated);
+
+    draggedProdIndexRef.current = toIdx;
+    setDraggedProdIndex(toIdx);
   };
 
   const handleProdDragEnd = async () => {
-    if (draggedProdIndexRef.current === null) return;
-
-    const currentIds = productsRef.current.map(p => p.id);
-    const hasChanged = JSON.stringify(currentIds) !== JSON.stringify(initialProdOrderRef.current);
-    if (!hasChanged) {
-      setDraggedProdIndex(null);
-      draggedProdIndexRef.current = null;
-      return;
-    }
-
-    const finalIdx = draggedProdIndexRef.current;
+    const draggedId = draggedProdIdRef.current;
+    draggedProdIdRef.current = null;
     draggedProdIndexRef.current = null;
     setDraggedProdIndex(null);
 
+    if (!draggedId) return;
+
+    const currentIds = productsRef.current.map(p => p.id);
+    const hasChanged = JSON.stringify(currentIds) !== JSON.stringify(initialProdOrderRef.current);
+    if (!hasChanged) return;
+
     const updated = [...productsRef.current];
-    const draggedItem = updated[finalIdx];
+    const draggedItem = updated.find(p => p.id === draggedId);
+    // Since cross-category drag is blocked in dragOver, the category never changes
+    const categoryId = draggedItem ? draggedItem.category_id : null;
 
-    // Determine if the dragged product changed categories based on its new neighbors in the list
-    if (updated.length > 1 && draggedItem) {
-      let targetCategoryId;
-      if (finalIdx === 0) {
-        targetCategoryId = updated[1].category_id;
-      } else if (finalIdx === updated.length - 1) {
-        targetCategoryId = updated[updated.length - 2].category_id;
-      } else {
-        const prevCatId = updated[finalIdx - 1].category_id;
-        const nextCatId = updated[finalIdx + 1].category_id;
-        if (prevCatId === nextCatId) {
-          targetCategoryId = prevCatId;
-        } else {
-          // Boundary: default to previous item's category
-          targetCategoryId = prevCatId;
-        }
-      }
-
-      if (draggedItem.category_id !== targetCategoryId) {
-        draggedItem.category_id = targetCategoryId;
-      }
+    // Recalculate sort_order only for products inside the affected category
+    const affectedProducts = [];
+    if (categoryId) {
+      const catProducts = updated.filter(p => p.category_id === categoryId);
+      catProducts.forEach((prod, idx) => {
+        affectedProducts.push({ ...prod, sort_order: idx });
+      });
     }
 
-    const originalOrders = productsRef.current.map(p => p.sort_order).sort((a, b) => a - b);
-    const sorted = updated.map((prod, idx) => ({
-      ...prod,
-      sort_order: originalOrders[idx]
-    }));
+    // Merge updates back into the full product list for local state
+    const nextProducts = productsRef.current.map(p => {
+      const match = affectedProducts.find(ap => ap.id === p.id);
+      return match ? match : p;
+    });
 
-    // In state, make sure it is sorted correctly by the helper
-    const menuSorted = sortProductsByMenuOrder(sorted, categories);
+    const menuSorted = sortProductsByMenuOrder(nextProducts, categories);
     setProducts(menuSorted);
 
     try {
       if (isDemoMode) {
         localStorage.setItem('luna_demo_products', JSON.stringify(menuSorted));
       } else {
-        const payload = menuSorted.map(prod => ({
+        // Upsert ONLY the affected products to the database
+        const payload = affectedProducts.map(prod => ({
           id: prod.id,
           category_id: prod.category_id,
           name: prod.name,
@@ -403,25 +511,25 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     if (type === 'category') {
       draggedCatIndexRef.current = targetIndex;
       setDraggedCatIndex(targetIndex);
-      setCategories(prev => {
-        const currIdx = prev.findIndex(c => c.id === draggedId);
-        if (currIdx === -1 || currIdx === targetIndex) return prev;
-        const updated = [...prev];
+      const currIdx = categoriesRef.current.findIndex(c => c.id === draggedId);
+      if (currIdx !== -1 && currIdx !== targetIndex) {
+        const updated = [...categoriesRef.current];
         const [draggedItem] = updated.splice(currIdx, 1);
         updated.splice(targetIndex, 0, draggedItem);
-        return updated;
-      });
+        categoriesRef.current = updated;
+        setCategories(updated);
+      }
     } else {
       draggedProdIndexRef.current = targetIndex;
       setDraggedProdIndex(targetIndex);
-      setProducts(prev => {
-        const currIdx = prev.findIndex(p => p.id === draggedId);
-        if (currIdx === -1 || currIdx === targetIndex) return prev;
-        const updated = [...prev];
+      const currIdx = productsRef.current.findIndex(p => p.id === draggedId);
+      if (currIdx !== -1 && currIdx !== targetIndex) {
+        const updated = [...productsRef.current];
         const [draggedItem] = updated.splice(currIdx, 1);
         updated.splice(targetIndex, 0, draggedItem);
-        return updated;
-      });
+        productsRef.current = updated;
+        setProducts(updated);
+      }
     }
   };
 
@@ -1045,6 +1153,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                           <tr 
                             key={prod.id}
                             data-type="product"
+                            data-id={prod.id}
                             data-index={index}
                             onDragOver={handleProdDragOver}
                             className={`draggable-row ${draggedProdIndex === index ? 'dragging-row' : ''}`}
@@ -1055,6 +1164,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
                                   className="drag-handle"
                                   draggable={true}
                                   data-type="product"
+                                  data-id={prod.id}
                                   data-index={index}
                                   onDragStart={handleProdDragStart}
                                   onDragEnd={handleProdDragEnd}
