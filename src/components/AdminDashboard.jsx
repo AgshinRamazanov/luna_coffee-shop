@@ -675,7 +675,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
         reader.onloadend = () => {
           setProdForm(prev => ({ ...prev, photo_url: reader.result }));
           setUploadingPhoto(false);
-          triggerToast('Şəkil kiçildildi və yükləndi (Demo rejimində saxlanıldı).');
+          triggerToast('Şəkil kiçildildi və yükləndi.');
         };
         reader.readAsDataURL(file);
       } else {
@@ -1061,7 +1061,6 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           <h1 style={{ fontSize: '2rem' }}>İdarəetmə Paneli</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             <span>{settings.shop_name || 'Luna Cafe'}</span>
-            {isDemoMode && <span style={{ padding: '2px 6px', backgroundColor: 'var(--bg-cream-dark)', borderRadius: '10px', fontSize: '0.7rem' }}>Demo Yaddaş</span>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>

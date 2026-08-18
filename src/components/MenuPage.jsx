@@ -27,7 +27,6 @@ const UI_TRANSLATIONS = {
     searchPlaceholder: "Axtar (məs: espresso, şirniyyat...)",
     allCategories: "Bütün Kateqoriyalar",
     staffPanel: "İşçi Paneli",
-    demoModeNotice: "Demo rejimi: Canlı qiymətləri redaktə etmək üçün Supabase qoşulun.",
     gatheringBeans: "Qəhvə dənələri yığılır...",
     noProducts: "Axtarışa uyğun məhsul tapılmadı.",
     fromPrice: "başlayan qiymət",
@@ -42,7 +41,6 @@ const UI_TRANSLATIONS = {
     searchPlaceholder: "Search (e.g. espresso, dessert...)",
     allCategories: "All Categories",
     staffPanel: "Staff Panel",
-    demoModeNotice: "Demo Mode: Connect to Supabase to update prices/items in real-time.",
     gatheringBeans: "Gathering coffee beans...",
     noProducts: "No products found matching your search.",
     fromPrice: "From",
@@ -57,7 +55,6 @@ const UI_TRANSLATIONS = {
     searchPlaceholder: "Поиск (например: эспрессо, десерт...)",
     allCategories: "Все категории",
     staffPanel: "Персонал",
-    demoModeNotice: "Демо-режим: подключите Supabase для обновления цен.",
     gatheringBeans: "Собираем кофейные зерна...",
     noProducts: "Товары не найдены по вашему запросу.",
     fromPrice: "От",
@@ -353,12 +350,6 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
           </div>
         </div>
 
-        {/* Demo Mode Notice */}
-        {isDemoMode && (
-          <div style={{ backgroundColor: 'rgba(198, 139, 89, 0.12)', border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: 'var(--wood-dark)', textAlign: 'center' }}>
-            <strong>Demo Mode:</strong> {t('demoModeNotice')}
-          </div>
-        )}
 
         {/* Search */}
         <div className="search-bar">
