@@ -22,14 +22,15 @@ export default function AdminLogin({ onLoginSuccess }) {
     setLoading(true);
 
     try {
+      // Check for demo mode credentials first if user explicitly enters them
+      if (email.trim() === 'admin@luna.local' && password === 'luna2026') {
+        sessionStorage.setItem('luna_admin_session', 'demo-session-token');
+        onLoginSuccess(true, true); // (authenticated, isDemoMode)
+        return;
+      }
+
       if (!isSupabaseConfigured) {
-        // Fallback demo mode login (email: 'admin@luna.local' / password: 'luna2026')
-        if (email.trim() === 'admin@luna.local' && password === 'luna2026') {
-          sessionStorage.setItem('luna_admin_session', 'demo-session-token');
-          onLoginSuccess(true, true); // (authenticated, isDemoMode)
-        } else {
-          setErrorMsg('Yanlış e-poçt və ya şifrə! (İpucu: Demo rejimi üçün email: "admin@luna.local", şifrə: "luna2026" istifadə edin)');
-        }
+        setErrorMsg('Yanlış e-poçt və ya şifrə! (İpucu: Demo rejimi üçün email: "admin@luna.local", şifrə: "luna2026" istifadə edin)');
       } else {
         // Active Supabase mode with secure Auth
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -89,25 +90,23 @@ export default function AdminLogin({ onLoginSuccess }) {
             </p>
           </div>
 
-          {!isSupabaseConfigured && (
-            <div style={{
-              backgroundColor: 'rgba(198, 139, 89, 0.08)',
-              border: '1px solid var(--wood-light)',
-              borderRadius: '8px',
-              padding: '0.75rem',
-              fontSize: '0.8rem',
-              color: 'var(--wood-medium)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.5rem',
-              textAlign: 'left'
-            }}>
-              <AlertTriangle size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <strong>Yerli Demo Rejimi:</strong> Supabase açarları hələ təyin edilmədiyi üçün admin panelinə daxil olmaq üçün standart məlumatlardan istifadə edə bilərsiniz: E-poçt: <code>admin@luna.local</code>, Şifrə: <code>luna2026</code>.
-              </div>
+          <div style={{
+            backgroundColor: 'rgba(198, 139, 89, 0.08)',
+            border: '1px solid var(--wood-light)',
+            borderRadius: '8px',
+            padding: '0.75rem',
+            fontSize: '0.8rem',
+            color: 'var(--wood-medium)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.5rem',
+            textAlign: 'left'
+          }}>
+            <AlertTriangle size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong>Demo Giriş Məlumatları:</strong> Daxil olmaq üçün bu məlumatlardan istifadə edə bilərsiniz — E-poçt: <code>admin@luna.local</code>, Şifrə: <code>luna2026</code>.
             </div>
-          )}
+          </div>
 
           {errorMsg && (
             <div style={{

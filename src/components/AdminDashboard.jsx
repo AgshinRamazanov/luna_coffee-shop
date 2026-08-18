@@ -622,28 +622,64 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
 
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const compressImageFile = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
 
-    if (file.size > 5 * 1024 * 1024) {
-      triggerToast('Fayl çox böyükdür (Maksimum 5MB).');
-      return;
-    }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = (err) => resolve(file);
+    });
+  };
+
+  const handlePhotoUpload = async (e) => {
+    let file = e.target.files[0];
+    if (!file) return;
 
     setUploadingPhoto(true);
 
     try {
+      // Automatically compress image client-side to save database storage & speed up loading
+      file = await compressImageFile(file, 800, 0.8);
+
       if (isDemoMode) {
         const reader = new FileReader();
         reader.onloadend = () => {
           setProdForm(prev => ({ ...prev, photo_url: reader.result }));
           setUploadingPhoto(false);
-          triggerToast('Şəkil yükləndi (Demo rejimində Base64 kimi saxlanıldı).');
+          triggerToast('Şəkil kiçildildi və yükləndi (Demo rejimində saxlanıldı).');
         };
         reader.readAsDataURL(file);
       } else {
-        const fileExt = file.name.split('.').pop();
+        const fileExt = 'jpg';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `${fileName}`;
 
@@ -651,7 +687,8 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
           .from('product-photos')
           .upload(filePath, file, {
             cacheControl: '3600',
-            upsert: true
+            upsert: true,
+            contentType: 'image/jpeg'
           });
 
         if (uploadError) {
@@ -667,7 +704,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
 
         setProdForm(prev => ({ ...prev, photo_url: publicUrl }));
         setUploadingPhoto(false);
-        triggerToast('Şəkil uğurla yükləndi.');
+        triggerToast('Şəkil uğurla kiçildilib yükləndi.');
       }
     } catch (err) {
       console.error(err);
