@@ -22,10 +22,10 @@ export default function AdminLogin({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      // Check for demo mode credentials first if user explicitly enters them
-      if (email.trim() === 'admin@luna.local' && password === 'luna2026') {
+      // Check for admin credentials
+      if (email.trim() === 'adminluna@gence.com' && password === 'lunaboss') {
         sessionStorage.setItem('luna_admin_session', 'demo-session-token');
-        onLoginSuccess(true, true); // (authenticated, isDemoMode)
+        onLoginSuccess(true, true);
         return;
       }
 
