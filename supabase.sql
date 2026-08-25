@@ -879,3 +879,44 @@ UPDATE categories SET name_en = 'Toasts', name_ru = 'Тосты' WHERE name = 'T
 UPDATE categories SET name_en = 'Cold Drinks', name_ru = 'Холодные Напитки' WHERE name = 'Soyuq İçecekler';
 UPDATE categories SET name_en = 'EXTRAS', name_ru = 'ЭКСТРА' WHERE name = 'EKSTRA';
 
+-- ====================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ====================================================
+
+-- 1. Categories Table Policies
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for categories" ON categories;
+CREATE POLICY "Allow all for categories" ON categories FOR ALL USING (true) WITH CHECK (true);
+
+-- 2. Products Table Policies
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for products" ON products;
+CREATE POLICY "Allow all for products" ON products FOR ALL USING (true) WITH CHECK (true);
+
+-- 3. Modifications Table Policies
+ALTER TABLE modifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for modifications" ON modifications;
+CREATE POLICY "Allow all for modifications" ON modifications FOR ALL USING (true) WITH CHECK (true);
+
+-- 4. Settings Table Policies
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for settings" ON settings;
+CREATE POLICY "Allow all for settings" ON settings FOR ALL USING (true) WITH CHECK (true);
+
+-- 5. Storage Bucket and Policies
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-photos', 'product-photos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'product-photos');
+
+DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
+CREATE POLICY "Public Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product-photos');
+
+DROP POLICY IF EXISTS "Public Update" ON storage.objects;
+CREATE POLICY "Public Update" ON storage.objects FOR UPDATE WITH CHECK (bucket_id = 'product-photos');
+
+DROP POLICY IF EXISTS "Public Delete" ON storage.objects;
+CREATE POLICY "Public Delete" ON storage.objects FOR DELETE USING (bucket_id = 'product-photos');
+

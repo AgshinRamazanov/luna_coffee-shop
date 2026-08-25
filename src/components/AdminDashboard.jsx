@@ -868,7 +868,7 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       setEditingProd(null);
     } catch (err) {
       console.error(err);
-      triggerToast('Məhsulun yadda saxlanılmasında xəta baş verdi.');
+      triggerToast(err.message || 'Məhsulun yadda saxlanılmasında xəta baş verdi.');
     }
   };
 
