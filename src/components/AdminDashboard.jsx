@@ -1059,20 +1059,9 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       <header className="admin-header">
         <div>
           <h1 style={{ fontSize: '2rem' }}>İdarəetmə Paneli</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)' }}>
-              {settings.shop_name || 'Luna Cafe'}
-            </span>
-            {isDemoMode ? (
-              <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(198, 139, 89, 0.15)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
-                Demo Rejim (Lokal Yaddaş)
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(77, 122, 92, 0.15)', color: 'var(--success)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
-                Bulud Rejimi (Supabase Aktiv)
-              </span>
-            )}
-          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span>{settings.shop_name || 'Luna Cafe'}</span>
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <a href="#/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
