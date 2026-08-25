@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import QRCode from 'qrcode';
-import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MODIFICATIONS, INITIAL_SETTINGS } from '../initialData';
+import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MODIFICATIONS, INITIAL_SETTINGS, DEMO_DATA_VERSION } from '../initialData';
 import { 
   FolderEdit, Coffee, Settings, QrCode, LogOut, 
   Plus, Edit2, Trash2, X, Wifi, 
@@ -113,14 +113,14 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
     try {
       if (!silent) setLoading(true);
       if (isDemoMode || !supabase) {
-        // Force migration to version 4 to load the full menu list
+        // Force migration to current demo data version if outdated or not initialized
         const currentVersion = localStorage.getItem('luna_demo_version');
-        if (currentVersion !== 'v4') {
+        if (currentVersion !== DEMO_DATA_VERSION) {
           localStorage.setItem('luna_demo_categories', JSON.stringify(INITIAL_CATEGORIES));
           localStorage.setItem('luna_demo_products', JSON.stringify(INITIAL_PRODUCTS));
           localStorage.setItem('luna_demo_modifications', JSON.stringify(INITIAL_MODIFICATIONS));
           localStorage.setItem('luna_demo_settings', JSON.stringify(INITIAL_SETTINGS));
-          localStorage.setItem('luna_demo_version', 'v4');
+          localStorage.setItem('luna_demo_version', DEMO_DATA_VERSION);
         }
 
         const storedCats = localStorage.getItem('luna_demo_categories');
@@ -1059,9 +1059,20 @@ export default function AdminDashboard({ isDemoMode, onLogout }) {
       <header className="admin-header">
         <div>
           <h1 style={{ fontSize: '2rem' }}>İdarəetmə Paneli</h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span>{settings.shop_name || 'Luna Cafe'}</span>
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)' }}>
+              {settings.shop_name || 'Luna Cafe'}
+            </span>
+            {isDemoMode ? (
+              <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(198, 139, 89, 0.15)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                Demo Rejim (Lokal Yaddaş)
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(77, 122, 92, 0.15)', color: 'var(--success)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                Bulud Rejimi (Supabase Aktiv)
+              </span>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <a href="#/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>

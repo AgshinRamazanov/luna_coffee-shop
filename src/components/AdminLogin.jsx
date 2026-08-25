@@ -24,8 +24,13 @@ export default function AdminLogin({ onLoginSuccess }) {
     try {
       // Check for admin credentials
       if (email.trim() === 'adminluna@gence.com' && password === 'lunaboss') {
-        sessionStorage.setItem('luna_admin_session', 'demo-session-token');
-        onLoginSuccess(true, true);
+        if (isSupabaseConfigured) {
+          sessionStorage.setItem('luna_admin_session', 'supabase-admin-session');
+          onLoginSuccess(true, false); // Active Cloud / Supabase database mode
+        } else {
+          sessionStorage.setItem('luna_admin_session', 'demo-session-token');
+          onLoginSuccess(true, true); // Local Demo mode (no Supabase keys)
+        }
         return;
       }
 

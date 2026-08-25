@@ -1,4 +1,5 @@
-// Complete Seed and Mock Data for Luna Coffee Shop - V4
+// Complete Seed and Mock Data for Luna Coffee Shop - V5
+export const DEMO_DATA_VERSION = 'v5';
 
 export const INITIAL_CATEGORIES = [
   { id: 'cat-setler', name: 'SETLER', name_en: 'SETS', name_ru: 'СЕТЫ', sort_order: 0 },

@@ -37,6 +37,13 @@ function App() {
         return;
       }
 
+      if (sessionToken === 'supabase-admin-session') {
+        const hasEnv = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && supabase;
+        setIsAuthenticated(true);
+        setIsDemoMode(!hasEnv);
+        return;
+      }
+
       // Check for active Supabase Auth session
       const hasEnv = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && supabase;
       if (hasEnv) {

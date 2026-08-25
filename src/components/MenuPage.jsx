@@ -20,7 +20,7 @@ const Instagram = ({ size = 24, ...props }) => (
   </svg>
 );
 
-import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MODIFICATIONS, INITIAL_SETTINGS } from '../initialData';
+import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MODIFICATIONS, INITIAL_SETTINGS, DEMO_DATA_VERSION } from '../initialData';
 
 const UI_TRANSLATIONS = {
   az: {
@@ -85,14 +85,14 @@ export default function MenuPage({ isDarkMode, setIsDarkMode }) {
   const categoriesNavRef = useRef(null);
 
   function loadMockData() {
-    // Force migration to version 5 to load the full menu list with translations
+    // Force migration to current demo data version if outdated or not initialized
     const currentVersion = localStorage.getItem('luna_demo_version');
-    if (currentVersion !== 'v5') {
+    if (currentVersion !== DEMO_DATA_VERSION) {
       localStorage.setItem('luna_demo_categories', JSON.stringify(INITIAL_CATEGORIES));
       localStorage.setItem('luna_demo_products', JSON.stringify(INITIAL_PRODUCTS));
       localStorage.setItem('luna_demo_modifications', JSON.stringify(INITIAL_MODIFICATIONS));
       localStorage.setItem('luna_demo_settings', JSON.stringify(INITIAL_SETTINGS));
-      localStorage.setItem('luna_demo_version', 'v5');
+      localStorage.setItem('luna_demo_version', DEMO_DATA_VERSION);
     }
 
     const storedCats = localStorage.getItem('luna_demo_categories');
